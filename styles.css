@@ -206,6 +206,19 @@ body {
     text-transform: uppercase;
   }
 
+  .action-link.is-active {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(135deg, #1f8f5b, #24b06f);
+    box-shadow: 0 10px 22px rgba(36, 176, 111, 0.24);
+  }
+
+  #logout-btn {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(135deg, #5a5f6c, #3f4451);
+  }
+
   .cart-pill {
     display: inline-flex;
     align-items: center;
@@ -1691,6 +1704,74 @@ body {
     margin-top: 2rem;
   }
 
+  .policies-section {
+    margin-top: 2rem;
+  }
+
+  .policies-head {
+    margin-bottom: 0.9rem;
+  }
+
+  .policies-accordion {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .policy-card {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 12px 30px rgba(32, 38, 51, 0.07);
+  }
+
+  .policy-card summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .policy-card summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .policy-card summary::after {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    color: var(--brand-strong);
+    background: rgba(183, 109, 99, 0.12);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .policy-card[open] summary::after {
+    content: "−";
+  }
+
+  .policy-card h3 {
+    margin: 0;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.45rem;
+    line-height: 1;
+  }
+
+  .policy-card ul {
+    margin: 0.8rem 0 0;
+    padding-left: 1.1rem;
+    color: var(--muted);
+    line-height: 1.75;
+    font-size: 0.9rem;
+  }
+
   .contact-panel {
     padding: 1.5rem;
     border: 1px solid rgba(183, 109, 99, 0.12);
@@ -1852,6 +1933,12 @@ body {
     max-width: 34ch;
   }
 
+  .footer-copy {
+    margin-top: 0.3rem !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.04em;
+  }
+
   .whatsapp-float {
     position: fixed;
     right: 1rem;
@@ -1919,7 +2006,8 @@ body {
 
     .collection-grid,
     .featured-layout,
-    .contact-section {
+    .contact-section,
+    .policies-accordion {
       grid-template-columns: 1fr;
     }
 
