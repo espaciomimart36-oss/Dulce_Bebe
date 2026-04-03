@@ -37,10 +37,12 @@
           <a href="#hero">Inicio</a>
           <a href="#catalogo">Catálogo</a>
           <a href="#contacto">Ubicación</a>
+          <a href="#politicas">Políticas</a>
         </nav>
 
         <div class="actions">
           <button type="button" class="action-link" id="open-register-btn">Registrarme</button>
+          <button type="button" class="action-link" id="open-login-btn">Iniciar sesión</button>
           <button type="button" class="cart-pill" id="open-cart-btn" aria-label="Abrir pedido">
             Pedido <span id="cart-count">0</span>
           </button>
@@ -199,6 +201,40 @@
           </ul>
         </aside>
       </section>
+
+      <section class="policies-section container reveal" id="politicas" aria-label="Políticas de compra">
+        <div class="section-head policies-head">
+          <div>
+            <span class="section-kicker">Información legal</span>
+            <h2>Política de compras, cambios y devoluciones</h2>
+          </div>
+          <p class="section-support">Te dejamos todo claro para que compres con tranquilidad.</p>
+        </div>
+
+        <div class="policies-grid">
+          <article class="policy-card">
+            <h3>Política de compras</h3>
+            <ul>
+              <li>Los pedidos se confirman por WhatsApp, sujeto a stock disponible.</li>
+              <li>Los precios y promociones se validan al momento de confirmar el pedido.</li>
+              <li>El envío se realiza por ViaCargo a todo el país.</li>
+              <li>Compras desde $50.000 acceden al 50% de descuento en envío.</li>
+              <li>Compras desde $100.000 acceden a envío gratis.</li>
+            </ul>
+          </article>
+
+          <article class="policy-card">
+            <h3>Devoluciones y reembolsos</h3>
+            <ul>
+              <li>Podés solicitar cambio o devolución dentro de las 48 horas de recibido el pedido.</li>
+              <li>El producto debe estar sin uso, en perfecto estado y con su etiqueta original.</li>
+              <li>Si hubo error en el envío o falla de fábrica, asumimos el costo logístico.</li>
+              <li>Si el cambio es por elección de talle o modelo, el envío corre por cuenta del cliente.</li>
+              <li>Los reembolsos aprobados se realizan por el mismo medio de pago en un plazo de 5 a 10 días hábiles.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
@@ -207,7 +243,8 @@
           <img class="footer-logo" src="img/logo.jpg" alt="Logo de Dulce Bebé" />
           <div>
             <p class="footer-title">Dulce Bebé</p>
-            <p>Boutique infantil con fotos reales y atención cercana.</p>
+            <p>Propietaria - Evelin Panzer La C Facha</p>
+            <p class="footer-copy">2026 - Todos los derechos reservados.</p>
           </div>
         </div>
       </div>
@@ -317,6 +354,10 @@
             Telefono
             <input type="tel" id="register-phone" placeholder="Ejemplo: +54 9 3757 555123" autocomplete="tel" required />
           </label>
+          <label class="full">
+            Clave
+            <input type="password" id="register-password" placeholder="Creá una clave" autocomplete="new-password" required />
+          </label>
           <label>
             Provincia
             <select id="register-province" required></select>
@@ -332,6 +373,34 @@
         </div>
         <p class="checkout-hint" id="register-hint">Con el codigo postal completamos provincia y localidad automaticamente.</p>
         <button type="submit" class="btn btn-primary register-submit-btn">Guardar datos</button>
+      </form>
+    </section>
+
+    <div class="register-overlay" id="login-overlay" hidden></div>
+    <section class="register-modal" id="login-modal" aria-label="Inicio de sesión" aria-hidden="true">
+      <div class="register-head">
+        <div>
+          <p class="cart-kicker">Acceso</p>
+          <h2>Iniciar sesión</h2>
+        </div>
+        <button type="button" class="cart-close-btn" id="close-login-btn" aria-label="Cerrar inicio de sesion">Cerrar</button>
+      </div>
+
+      <p class="cart-helper-text">Ingresá el email y la clave que creaste al registrarte.</p>
+
+      <form id="login-form" class="register-form" novalidate>
+        <div class="checkout-grid">
+          <label class="full">
+            Email
+            <input type="email" id="login-email" placeholder="Ejemplo: ana@email.com" autocomplete="email" required />
+          </label>
+          <label class="full">
+            Clave
+            <input type="password" id="login-password" placeholder="Tu clave" autocomplete="current-password" required />
+          </label>
+        </div>
+        <p class="checkout-hint" id="login-hint">Tus datos se cargarán automáticamente al pedido al iniciar sesión.</p>
+        <button type="submit" class="btn btn-primary register-submit-btn">Ingresar</button>
       </form>
     </section>
 

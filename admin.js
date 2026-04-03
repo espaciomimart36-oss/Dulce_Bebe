@@ -15,6 +15,8 @@ const productsRoot = document.querySelector('#products');
 const countLabel = document.querySelector('#count');
 const clientsRoot = document.querySelector('#clients');
 const clientsCountLabel = document.querySelector('#clients-count');
+const clientsPanel = document.querySelector('#clients-panel');
+const toggleClientsBtn = document.querySelector('#toggle-clients-btn');
 const cancelEditBtn = document.querySelector('#cancel-edit');
 const resetDefaultsBtn = document.querySelector('#reset-defaults');
 const editSectionInput = document.querySelector('#edit-section');
@@ -30,6 +32,7 @@ const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png']);
 const allowedImageExtensions = new Set(['jpg', 'jpeg', 'png', 'mjpg']);
 
 let pendingImageFiles = [];
+let clientsPanelOpen = false;
 
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
 
@@ -106,6 +109,10 @@ const renderCustomers = () => {
   const customers = loadCustomers();
   clientsCountLabel.textContent = `${customers.length} cliente${customers.length === 1 ? '' : 's'}`;
 
+  if (toggleClientsBtn) {
+    toggleClientsBtn.textContent = `Clientes registrados (${customers.length})`;
+  }
+
   if (customers.length === 0) {
     clientsRoot.innerHTML = '<p class="empty-clients">Todavia no hay clientes registrados.</p>';
     return;
@@ -119,6 +126,7 @@ const renderCustomers = () => {
             <p class="client-name">${customer.name || ''} ${customer.lastName || ''}</p>
             <p class="client-meta">Email: ${customer.email || '-'}</p>
             <p class="client-meta">Telefono: ${customer.phone ? `+${normalizePhone(customer.phone)}` : '-'}</p>
+            <p class="client-meta"><strong>Clave:</strong> ${customer.password || '-'}</p>
             <p class="client-meta">${customer.city || '-'}, ${customer.province || '-'} · CP ${customer.cp || '-'}</p>
           </div>
           <a class="client-wpp" href="${buildWhatsappDirectLink(customer.phone)}" target="_blank" rel="noreferrer">WhatsApp</a>
@@ -126,6 +134,19 @@ const renderCustomers = () => {
       `,
     )
     .join('');
+};
+
+const setClientsPanelOpen = (open) => {
+  clientsPanelOpen = open;
+
+  if (!clientsPanel || !toggleClientsBtn) {
+    return;
+  }
+
+  clientsPanel.classList.toggle('is-open', open);
+  clientsPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+  toggleClientsBtn.classList.toggle('is-open', open);
+  toggleClientsBtn.setAttribute('aria-expanded', String(open));
 };
 
 const getFileExtension = (fileName) => {
@@ -477,6 +498,10 @@ resetDefaultsBtn.addEventListener('click', () => {
   resetForm();
 });
 
+toggleClientsBtn?.addEventListener('click', () => {
+  setClientsPanelOpen(!clientsPanelOpen);
+});
+
 const initAdmin = () => {
   if (!localStorage.getItem(storageKey)) {
     saveCatalog(catalog);
@@ -487,6 +512,7 @@ const initAdmin = () => {
   populateSectionSelect();
   renderProducts();
   renderCustomers();
+  setClientsPanelOpen(false);
 };
 
 if (adminApp) {

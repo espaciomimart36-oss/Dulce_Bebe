@@ -15,18 +15,27 @@ const cartSendBtn = document.querySelector('#cart-send-btn');
 const cartClearBtn = document.querySelector('#cart-clear-btn');
 const cartEmptyText = document.querySelector('#cart-empty-text');
 const openRegisterBtn = document.querySelector('#open-register-btn');
+const openLoginBtn = document.querySelector('#open-login-btn');
 const closeRegisterBtn = document.querySelector('#close-register-btn');
 const registerOverlay = document.querySelector('#register-overlay');
 const registerModal = document.querySelector('#register-modal');
+const loginOverlay = document.querySelector('#login-overlay');
+const loginModal = document.querySelector('#login-modal');
+const closeLoginBtn = document.querySelector('#close-login-btn');
 const registerForm = document.querySelector('#register-form');
+const loginForm = document.querySelector('#login-form');
 const registerNameInput = document.querySelector('#register-name');
 const registerLastNameInput = document.querySelector('#register-lastname');
 const registerEmailInput = document.querySelector('#register-email');
 const registerPhoneInput = document.querySelector('#register-phone');
+const registerPasswordInput = document.querySelector('#register-password');
 const registerProvinceSelect = document.querySelector('#register-province');
 const registerCpInput = document.querySelector('#register-cp');
 const registerCityInput = document.querySelector('#register-city');
 const registerHint = document.querySelector('#register-hint');
+const loginEmailInput = document.querySelector('#login-email');
+const loginPasswordInput = document.querySelector('#login-password');
+const loginHint = document.querySelector('#login-hint');
 const checkoutNameInput = document.querySelector('#checkout-name');
 const checkoutLastNameInput = document.querySelector('#checkout-lastname');
 const checkoutEmailInput = document.querySelector('#checkout-email');
@@ -46,6 +55,7 @@ const cartStorageKey = 'dulcebebe.cart.v1';
 const checkoutStorageKey = 'dulcebebe.checkout.v1';
 const customerProfileStorageKey = 'dulcebebe.customer-profile.v1';
 const customersStorageKey = 'dulcebebe.customers.v1';
+const customerSessionStorageKey = 'dulcebebe.customer-session.v1';
 
 const defaultCatalogSections = window.DEFAULT_CATALOG_SECTIONS || [
   {
@@ -365,12 +375,94 @@ const saveCart = (cart) => {
 };
 
 let cart = loadCart();
+let itemIndex = new Map();
 
 if (!localStorage.getItem(catalogStorageKey)) {
   saveCatalogSections(catalogSections);
 } else {
   saveCatalogSections(catalogSections);
 }
+
+const refreshCatalogFromStorage = () => {
+  catalogSections = loadCatalogSections();
+};
+
+const findCatalogItemById = (itemId) => itemIndex.get(itemId);
+
+const clampCartToStock = () => {
+  let changed = false;
+
+  cart = cart
+    .map((entry) => {
+      const match = findCatalogItemById(entry.id);
+
+      if (!match) {
+        changed = true;
+        return null;
+      }
+
+      const maxStock = normalizeStock(match.item.stock);
+
+      if (maxStock <= 0) {
+        changed = true;
+        return null;
+      }
+
+      const nextQuantity = Math.min(entry.quantity, maxStock);
+
+      if (nextQuantity !== entry.quantity || entry.stock !== maxStock) {
+        changed = true;
+      }
+
+      return {
+        ...entry,
+        quantity: nextQuantity,
+        stock: maxStock,
+      };
+    })
+    .filter(Boolean);
+
+  if (changed) {
+    saveCart(cart);
+  }
+};
+
+const buildItemIndexFromCatalog = () => {
+  itemIndex = new Map(
+    catalogSections.flatMap((section) =>
+      section.items.map((item) => [getItemId(section.id, item), { item, sectionId: section.id }]),
+    ),
+  );
+};
+
+const renderCatalogUI = () => {
+  if (!catalogRoot) {
+    return;
+  }
+
+  buildItemIndexFromCatalog();
+
+  const featuredItems = featuredTitles
+    .map((title) => {
+      const section = catalogSections.find((entry) => entry.items.some((item) => item.title === title));
+      const item = section?.items.find((entry) => entry.title === title);
+
+      if (!section || !item) {
+        return null;
+      }
+
+      return { item, sectionId: section.id };
+    })
+    .filter(Boolean);
+
+  if (featuredRoot) {
+    featuredRoot.innerHTML = featuredItems.map(({ item, sectionId }) => renderFeaturedItem(item, sectionId)).join('');
+  }
+
+  catalogRoot.innerHTML = catalogSections.map((section) => renderSection(section)).join('');
+  clampCartToStock();
+  renderCart();
+};
 
 const assetPath = (fileName) => {
   if (typeof fileName !== 'string') {
@@ -543,6 +635,7 @@ const loadCheckout = () => {
         lastName: '',
         email: '',
         phone: '',
+        password: '',
         province: 'Misiones',
         cp: '',
         city: '',
@@ -555,6 +648,7 @@ const loadCheckout = () => {
       lastName: parsed?.lastName || '',
       email: parsed?.email || '',
       phone: parsed?.phone || '',
+      password: parsed?.password || '',
       province: parsed?.province || 'Misiones',
       cp: parsed?.cp || '',
       city: parsed?.city || '',
@@ -565,6 +659,7 @@ const loadCheckout = () => {
       lastName: '',
       email: '',
       phone: '',
+      password: '',
       province: 'Misiones',
       cp: '',
       city: '',
@@ -582,6 +677,7 @@ const loadCustomerProfile = () => {
         lastName: '',
         email: '',
         phone: '',
+        password: '',
         province: 'Misiones',
         cp: '',
         city: '',
@@ -595,6 +691,7 @@ const loadCustomerProfile = () => {
       lastName: parsed?.lastName || '',
       email: parsed?.email || '',
       phone: parsed?.phone || '',
+      password: parsed?.password || '',
       province: parsed?.province || 'Misiones',
       cp: parsed?.cp || '',
       city: parsed?.city || '',
@@ -605,6 +702,7 @@ const loadCustomerProfile = () => {
       lastName: '',
       email: '',
       phone: '',
+      password: '',
       province: 'Misiones',
       cp: '',
       city: '',
@@ -614,6 +712,28 @@ const loadCustomerProfile = () => {
 
 const saveCustomerProfile = (profile) => {
   localStorage.setItem(customerProfileStorageKey, JSON.stringify(profile));
+};
+
+const loadCustomerSession = () => {
+  try {
+    const raw = localStorage.getItem(customerSessionStorageKey);
+
+    if (!raw) {
+      return { loggedIn: false, email: '' };
+    }
+
+    const parsed = JSON.parse(raw);
+    return {
+      loggedIn: Boolean(parsed?.loggedIn),
+      email: parsed?.email || '',
+    };
+  } catch (_error) {
+    return { loggedIn: false, email: '' };
+  }
+};
+
+const saveCustomerSession = (session) => {
+  localStorage.setItem(customerSessionStorageKey, JSON.stringify(session));
 };
 
 const loadRegisteredCustomers = () => {
@@ -649,6 +769,7 @@ const upsertRegisteredCustomer = (profile) => {
   const payload = {
     ...profile,
     phone: normalizedPhone,
+    password: String(profile.password || '').trim(),
     updatedAt: now,
     createdAt: customers[index]?.createdAt || now,
   };
@@ -686,6 +807,17 @@ const saveCheckout = () => {
       cp: checkoutCpInput.value.trim(),
       city: checkoutCityInput.value.trim(),
     }),
+  );
+};
+
+const findCustomerByEmailAndPassword = (email, password) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedPassword = String(password || '').trim();
+
+  return loadRegisteredCustomers().find(
+    (customer) =>
+      customer.email?.trim().toLowerCase() === normalizedEmail &&
+      String(customer.password || '').trim() === normalizedPassword,
   );
 };
 
@@ -813,6 +945,7 @@ const hydrateRegister = () => {
     !registerLastNameInput ||
     !registerEmailInput ||
     !registerPhoneInput ||
+    !registerPasswordInput ||
     !registerProvinceSelect ||
     !registerCpInput ||
     !registerCityInput
@@ -824,19 +957,31 @@ const hydrateRegister = () => {
   registerLastNameInput.value = profile.lastName;
   registerEmailInput.value = profile.email;
   registerPhoneInput.value = formatPhoneDisplay(profile.phone || '');
+  registerPasswordInput.value = profile.password || '';
   registerProvinceSelect.value = argentinaProvinces.includes(profile.province) ? profile.province : 'Misiones';
   registerCpInput.value = profile.cp;
   registerCityInput.value = profile.city;
 };
 
 const updateRegisterButtonState = () => {
-  if (!openRegisterBtn) {
+  if (!openRegisterBtn && !openLoginBtn) {
     return;
   }
 
-  const profile = loadCustomerProfile();
-  const hasProfile = Boolean(profile.name && profile.lastName && profile.email && profile.phone);
-  openRegisterBtn.textContent = hasProfile ? 'Iniciar sesión' : 'Registrarme';
+  const session = loadCustomerSession();
+
+  if (openRegisterBtn) {
+    openRegisterBtn.textContent = 'Registrarme';
+  }
+
+  if (openLoginBtn) {
+    openLoginBtn.classList.toggle('is-active', session.loggedIn);
+    openLoginBtn.textContent = session.loggedIn ? 'Sesión iniciada' : 'Iniciar sesión';
+    openLoginBtn.setAttribute(
+      'aria-label',
+      session.loggedIn ? `Sesión iniciada: ${session.email || 'cliente'}` : 'Iniciar sesión',
+    );
+  }
 };
 
 const openRegister = () => {
@@ -847,6 +992,35 @@ const openRegister = () => {
   registerModal.classList.add('is-open');
   registerModal.setAttribute('aria-hidden', 'false');
   registerOverlay.hidden = false;
+
+  if (registerHint) {
+    registerHint.textContent =
+      'Al registrarte, tus datos se cargan automaticamente al momento de pedir por WhatsApp.';
+  }
+};
+
+const openLogin = () => {
+  if (!loginModal || !loginOverlay) {
+    return;
+  }
+
+  loginModal.classList.add('is-open');
+  loginModal.setAttribute('aria-hidden', 'false');
+  loginOverlay.hidden = false;
+
+  if (loginHint) {
+    loginHint.textContent = 'Ingresá el email y la clave que creaste al registrarte.';
+  }
+};
+
+const closeLogin = () => {
+  if (!loginModal || !loginOverlay) {
+    return;
+  }
+
+  loginModal.classList.remove('is-open');
+  loginModal.setAttribute('aria-hidden', 'true');
+  loginOverlay.hidden = true;
 };
 
 const closeRegister = () => {
@@ -1332,31 +1506,7 @@ if (menuBtn && nav) {
 }
 
 if (catalogRoot) {
-  const allItems = catalogSections.flatMap((section) => section.items);
-  const itemIndex = new Map(
-    catalogSections.flatMap((section) =>
-      section.items.map((item) => [getItemId(section.id, item), { item, sectionId: section.id }]),
-    ),
-  );
-  const featuredItems = featuredTitles
-    .map((title) => {
-      const section = catalogSections.find((entry) => entry.items.some((item) => item.title === title));
-      const item = section?.items.find((entry) => entry.title === title);
-
-      if (!section || !item) {
-        return null;
-      }
-
-      return { item, sectionId: section.id };
-    })
-    .filter(Boolean);
-
-  if (featuredRoot) {
-    featuredRoot.innerHTML = featuredItems.map(({ item, sectionId }) => renderFeaturedItem(item, sectionId)).join('');
-  }
-
-  catalogRoot.innerHTML = catalogSections.map((section) => renderSection(section)).join('');
-  renderCart();
+  renderCatalogUI();
 
   if (catalogSummary) {
     catalogSummary.textContent = 'Viendo selección destacada.';
@@ -1436,6 +1586,19 @@ if (catalogRoot) {
       addToCart(match.sectionId, match.item);
     }
   });
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== catalogStorageKey) {
+      return;
+    }
+
+    refreshCatalogFromStorage();
+    renderCatalogUI();
+
+    if (catalogSummary) {
+      catalogSummary.textContent = 'Catálogo actualizado desde admin.';
+    }
+  });
 }
 
 cartItemsRoot?.addEventListener('click', (event) => {
@@ -1473,8 +1636,11 @@ cartClearBtn?.addEventListener('click', () => {
 });
 
 openRegisterBtn?.addEventListener('click', openRegister);
+openLoginBtn?.addEventListener('click', openLogin);
 closeRegisterBtn?.addEventListener('click', closeRegister);
 registerOverlay?.addEventListener('click', closeRegister);
+closeLoginBtn?.addEventListener('click', closeLogin);
+loginOverlay?.addEventListener('click', closeLogin);
 
 registerForm?.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -1484,6 +1650,7 @@ registerForm?.addEventListener('submit', (event) => {
     !registerLastNameInput ||
     !registerEmailInput ||
     !registerPhoneInput ||
+    !registerPasswordInput ||
     !registerProvinceSelect ||
     !registerCpInput ||
     !registerCityInput
@@ -1493,6 +1660,7 @@ registerForm?.addEventListener('submit', (event) => {
 
   const email = registerEmailInput.value.trim();
   const phone = normalizePhone(registerPhoneInput.value.trim());
+  const password = registerPasswordInput.value.trim();
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   if (!emailOk) {
@@ -1511,17 +1679,35 @@ registerForm?.addEventListener('submit', (event) => {
     return;
   }
 
+  if (password.length < 4) {
+    if (registerHint) {
+      registerHint.textContent = 'La clave debe tener al menos 4 caracteres.';
+    }
+
+    return;
+  }
+
   const profile = {
     name: registerNameInput.value.trim(),
     lastName: registerLastNameInput.value.trim(),
     email,
     phone,
+    password,
     province: registerProvinceSelect.value,
     cp: registerCpInput.value.trim(),
     city: registerCityInput.value.trim(),
   };
 
-  if (!profile.name || !profile.lastName || !profile.email || !profile.phone || !profile.province || !profile.cp || !profile.city) {
+  if (
+    !profile.name ||
+    !profile.lastName ||
+    !profile.email ||
+    !profile.phone ||
+    !profile.password ||
+    !profile.province ||
+    !profile.cp ||
+    !profile.city
+  ) {
     if (registerHint) {
       registerHint.textContent = 'Todos los datos son obligatorios para completar el registro.';
     }
@@ -1533,6 +1719,10 @@ registerForm?.addEventListener('submit', (event) => {
   upsertRegisteredCustomer(profile);
   syncProfileToCheckout(profile);
   saveCheckout();
+  saveCustomerSession({
+    loggedIn: true,
+    email: profile.email,
+  });
   updateShippingSummary();
   updateRegisterButtonState();
 
@@ -1541,6 +1731,59 @@ registerForm?.addEventListener('submit', (event) => {
   }
 
   closeRegister();
+});
+
+loginForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  if (!loginEmailInput || !loginPasswordInput) {
+    return;
+  }
+
+  const email = loginEmailInput.value.trim();
+  const password = loginPasswordInput.value.trim();
+
+  if (!email || !password) {
+    if (loginHint) {
+      loginHint.textContent = 'Completá email y clave para iniciar sesión.';
+    }
+
+    return;
+  }
+
+  const customer = findCustomerByEmailAndPassword(email, password);
+
+  if (!customer) {
+    if (loginHint) {
+      loginHint.textContent = 'Email o clave incorrectos. Revisá tus datos.';
+    }
+
+    return;
+  }
+
+  const profile = {
+    name: customer.name || '',
+    lastName: customer.lastName || '',
+    email: customer.email || '',
+    phone: customer.phone || '',
+    password: customer.password || '',
+    province: customer.province || 'Misiones',
+    cp: customer.cp || '',
+    city: customer.city || '',
+  };
+
+  saveCustomerProfile(profile);
+  syncProfileToCheckout(profile);
+  saveCheckout();
+  saveCustomerSession({ loggedIn: true, email: customer.email || '' });
+  updateShippingSummary();
+  updateRegisterButtonState();
+
+  if (loginHint) {
+    loginHint.textContent = 'Sesión iniciada. Tus datos ya están cargados en el pedido.';
+  }
+
+  closeLogin();
 });
 
 populateProvinceSelect();
