@@ -37,6 +37,30 @@ body {
     linear-gradient(180deg, #fffdfb 0%, var(--bg) 100%);
 }
 
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  width: clamp(240px, 28vw, 420px);
+  height: clamp(240px, 28vw, 420px);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+body::before {
+  top: -120px;
+  left: -110px;
+  background: radial-gradient(circle, rgba(243, 205, 182, 0.42) 0%, rgba(243, 205, 182, 0) 72%);
+}
+
+body::after {
+  right: -130px;
+  bottom: -140px;
+  background: radial-gradient(circle, rgba(116, 63, 74, 0.18) 0%, rgba(116, 63, 74, 0) 70%);
+}
+
   img {
     display: block;
     width: 100%;
@@ -262,17 +286,31 @@ body {
 
   main {
     padding: 1.15rem 0 3.2rem;
+    position: relative;
+    isolation: isolate;
+  }
+
+  main > section.container {
+    position: relative;
+    z-index: 1;
+  }
+
+  main > section.container + section.container {
+    margin-top: clamp(1.2rem, 2.2vw, 2rem);
   }
 
   .hero {
     display: grid;
     grid-template-columns: minmax(360px, 0.95fr) minmax(400px, 1.05fr);
     gap: 1.25rem;
-    align-items: stretch;
+    align-items: center;
   }
 
   .hero-copy {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     overflow: hidden;
     padding: clamp(1.5rem, 2.8vw, 2.6rem);
     border-radius: var(--radius-xl);
@@ -693,6 +731,9 @@ body {
 
   .catalog {
     margin-top: 2rem;
+    padding: clamp(0.5rem, 1.2vw, 0.85rem);
+    border-radius: 30px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.2));
   }
 
   .catalog-featured {
@@ -1383,6 +1424,11 @@ body {
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 1rem;
+    padding: clamp(0.9rem, 1.6vw, 1.15rem);
+    border: 1px solid rgba(35, 39, 51, 0.06);
+    border-radius: 24px;
+    background: linear-gradient(170deg, rgba(255, 255, 255, 0.86), rgba(255, 247, 242, 0.76));
+    box-shadow: 0 12px 28px rgba(32, 38, 51, 0.06);
   }
 
   .section-kicker {
@@ -1702,10 +1748,16 @@ body {
     grid-template-columns: 1.12fr 0.88fr;
     gap: 1rem;
     margin-top: 2rem;
+    padding: clamp(0.5rem, 1.2vw, 0.85rem);
+    border-radius: 30px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.16));
   }
 
   .policies-section {
     margin-top: 2rem;
+    padding: clamp(0.5rem, 1.2vw, 0.85rem);
+    border-radius: 30px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.14));
   }
 
   .policies-head {
@@ -2111,6 +2163,7 @@ body {
     .section-head {
       flex-direction: column;
       align-items: flex-start;
+      padding: 0.95rem;
     }
 
     .footer-inner {
@@ -2153,6 +2206,13 @@ body {
     .whatsapp-float {
       width: 56px;
       height: 56px;
+    }
+
+    .catalog,
+    .contact-section,
+    .policies-section {
+      padding: 0.35rem;
+      border-radius: 22px;
     }
   }
 

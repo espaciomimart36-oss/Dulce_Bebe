@@ -107,6 +107,40 @@ body {
   text-transform: uppercase;
 }
 
+.clients-toggle-btn {
+  border: 1px solid rgba(183, 109, 99, 0.24);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  color: #4a2f2f;
+  background: linear-gradient(135deg, #fff, #fff6f2);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.clients-toggle-btn::after {
+  content: "▾";
+  font-size: 0.8rem;
+  transition: transform 180ms ease;
+}
+
+.clients-toggle-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(183, 109, 99, 0.44);
+  box-shadow: 0 10px 18px rgba(183, 109, 99, 0.16);
+}
+
+.clients-toggle-btn.is-open::after {
+  transform: rotate(180deg);
+}
+
 .kicker {
   margin: 0;
   color: var(--brand);
@@ -164,7 +198,19 @@ h1 {
 }
 
 .clients-card {
+  margin-top: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-8px);
+  transition: max-height 280ms ease, opacity 220ms ease, transform 220ms ease, margin-top 220ms ease;
+}
+
+.clients-card.is-open {
   margin-top: 1rem;
+  max-height: 900px;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 h2 {
@@ -400,6 +446,11 @@ textarea {
     width: 100%;
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .clients-toggle-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .client-row {
