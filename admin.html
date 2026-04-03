@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin | Dulce Bebe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <main class="admin-wrap" id="admin-app">
+      <header class="admin-head">
+        <div>
+          <p class="kicker">Panel admin</p>
+          <h1>Dulce Bebe</h1>
+          <p class="sub">Cargá productos, precios y promos de forma simple.</p>
+        </div>
+        <div class="head-actions">
+          <a href="index.html" class="back-link">Volver a la tienda</a>
+        </div>
+      </header>
+
+      <section class="admin-grid">
+        <article class="card form-card">
+          <h2 id="form-title">Nuevo producto</h2>
+          <form id="product-form" class="form">
+            <input type="hidden" id="edit-section" />
+            <input type="hidden" id="edit-index" />
+
+            <label>
+              Seccion
+              <select id="section" required></select>
+            </label>
+
+            <label>
+              Categoria
+              <input id="label" type="text" placeholder="Ejemplo: Vestido" required />
+            </label>
+
+            <label>
+              Nombre del producto
+              <input id="title" type="text" placeholder="Ejemplo: Vestido waffle" required />
+            </label>
+
+            <label>
+              Precio (opcional)
+              <input id="price" type="text" placeholder="Ejemplo: $45.000" />
+            </label>
+
+            <label>
+              Promo (opcional)
+              <input id="promo" type="text" placeholder="Ejemplo: 2x1 o 15% OFF" />
+            </label>
+
+            <label>
+              Imagenes (una por linea)
+              <textarea id="images" rows="6" placeholder="vestidodewafleknit.jpg"></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="btn primary">Guardar</button>
+              <button type="button" class="btn" id="cancel-edit">Cancelar</button>
+              <button type="button" class="btn" id="reset-defaults">Restaurar base</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="card list-card">
+          <div class="list-head">
+            <h2>Productos cargados</h2>
+            <p id="count"></p>
+          </div>
+          <div id="products"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="catalog-default.js?v=2"></script>
+    <script src="admin.js?v=2"></script>
+  </body>
+</html>

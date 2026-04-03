@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" role="img" aria-label="Dulce Bebe">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e5cfc3" />
+      <stop offset="100%" stop-color="#d7bcaf" />
+    </linearGradient>
+  </defs>
+  <rect width="900" height="900" fill="url(#bg)" />
+  <g transform="translate(450 340)">
+    <circle cx="-120" cy="-90" r="46" fill="#7d4f45" />
+    <circle cx="120" cy="-90" r="46" fill="#7d4f45" />
+    <circle cx="-120" cy="-90" r="30" fill="#f2bf9d" />
+    <circle cx="120" cy="-90" r="30" fill="#f2bf9d" />
+    <ellipse cx="0" cy="0" rx="190" ry="160" fill="#8f5952" />
+    <ellipse cx="0" cy="55" rx="78" ry="62" fill="#f2bf9d" />
+    <ellipse cx="-54" cy="0" rx="14" ry="20" fill="#1f1f28" />
+    <ellipse cx="54" cy="0" rx="14" ry="20" fill="#1f1f28" />
+    <ellipse cx="0" cy="32" rx="34" ry="20" fill="#2d1f20" />
+    <path d="M -30 62 Q 0 84 30 62" fill="none" stroke="#2d1f20" stroke-width="8" stroke-linecap="round" />
+  </g>
+  <text x="450" y="700" text-anchor="middle" fill="#ba9387" font-family="Brush Script MT, Segoe Script, cursive" font-size="120">Dulce Bebe</text>
+</svg>

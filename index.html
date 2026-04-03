@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dulce Bebé | Boutique Infantil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="promo-strip" aria-label="Anuncios destacados">
+      <div class="promo-track">
+        <p>Envíos a todo el país</p>
+        <p>Atención personalizada por WhatsApp</p>
+        <p>Nos encanta tenerte acá</p>
+        <p>Comandante Andresito - Misiones</p>
+        <p>Envíos a todo el país</p>
+        <p>Atención personalizada por WhatsApp</p>
+        <p>Nos encanta tenerte acá</p>
+        <p>Comandante Andresito - Misiones</p>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a href="#hero" class="logo" aria-label="Inicio Dulce Bebé">
+          <img class="logo-mark" src="assets/dulce-bebe-mark.svg" alt="" />
+          <span class="logo-stack">
+            <span class="logo-text">Dulce Bebé</span>
+            <span class="location-chip">
+              <span class="location-dot" aria-hidden="true"></span>
+              Comandante Andresito - Misiones
+            </span>
+          </span>
+        </a>
+
+        <nav class="main-nav" aria-label="Navegación principal">
+          <a href="#hero">Inicio</a>
+          <a href="#catalogo">Catálogo</a>
+          <a href="#contacto">Ubicación</a>
+          <a href="#productos" class="sale-link">Productos</a>
+        </nav>
+
+        <button class="menu-btn" aria-label="Abrir menú" aria-expanded="false">Menú</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero container reveal" id="hero">
+        <article class="hero-copy">
+          <span class="eyebrow">Ropa para bebés y niños</span>
+          <h1>Bienvenida a Dulce Bebé</h1>
+          <p>
+            Espero que encuentres lo que buscás. Si necesitás algo específico,
+            no dudes en contarme y te ayudo con mucho cariño.
+          </p>
+
+          <div class="hero-cta">
+            <a href="#catalogo" class="btn btn-primary">Ver catálogo</a>
+            <a href="#" class="btn btn-ghost js-whatsapp-link">Consultar por WhatsApp</a>
+          </div>
+
+          <div class="hero-metrics" aria-label="Beneficios principales">
+            <article>
+              <strong>Ropita y abrigo</strong>
+              <span>Piezas suaves para cada momento</span>
+            </article>
+            <article>
+              <strong>Ajuar y detalles</strong>
+              <span>Todo reunido en un mismo lugar</span>
+            </article>
+            <article>
+              <strong>Atención cercana</strong>
+              <span>Consultas dulces por WhatsApp</span>
+            </article>
+          </div>
+        </article>
+
+        <article class="hero-media">
+          <span class="hero-orbit orbit-one" aria-hidden="true"></span>
+          <span class="hero-orbit orbit-two" aria-hidden="true"></span>
+          <div class="brand-stage">
+            <div class="stage-shell">
+              <img src="assets/dulce-bebe.svg" alt="Logo principal de Dulce Bebé" />
+            </div>
+          </div>
+          <div class="floating-card floating-bottom">Comandante Andresito - Misiones</div>
+        </article>
+      </section>
+
+      <section class="category-highlights container reveal" aria-label="Accesos al catálogo">
+        <a href="#ajuar" class="category-link">
+          <img src="img/ajuar.jpg" alt="Ajuar y esenciales" />
+          <span class="category-overlay">
+            <strong>Ajuar y esenciales</strong>
+            <small>Primeros días con una presentación suave</small>
+          </span>
+        </a>
+        <a href="#ropa" class="category-link">
+          <img src="img/vestidodecorderoy.jpg" alt="Ropita y conjuntos" />
+          <span class="category-overlay">
+            <strong>Ropita y conjuntos</strong>
+            <small>Vestidos, abrigos, básicos y sets</small>
+          </span>
+        </a>
+        <a href="#accesorios" class="category-link">
+          <img src="img/mamadera260ml.jpg" alt="Accesorios y detalles" />
+          <span class="category-overlay">
+            <strong>Accesorios y detalles</strong>
+            <small>Complementos tiernos para cada compra</small>
+          </span>
+        </a>
+      </section>
+
+      <section class="about-us container reveal" id="quienes-somos" aria-label="Quiénes somos">
+        <div class="about-inner">
+          <div>
+            <span class="section-kicker">Quiénes somos</span>
+            <h2>En Dulce Bebé elegimos cada prenda con amor y dedicación.</h2>
+          </div>
+          <p>
+            Somos una tienda de Comandante Andresito - Misiones, enfocada en ropa y accesorios para bebés y niños.
+            Nos encanta acompañarte con atención cercana para ayudarte a encontrar justo lo que necesitás.
+          </p>
+        </div>
+      </section>
+
+      <section class="catalog container" id="catalogo">
+        <div class="section-head reveal">
+          <div>
+            <span class="section-kicker">Catálogo</span>
+            <h2>Cada pieza, presentada con amor y de forma más clara.</h2>
+            <p class="section-support">
+              Tocá las fotitos de cada producto para ver más detalles con una animación suave.
+            </p>
+          </div>
+          <p class="catalog-summary" id="catalog-summary">Viendo selección destacada.</p>
+        </div>
+
+        <div id="catalog-featured" class="catalog-grid catalog-featured"></div>
+
+        <div class="catalog-actions">
+          <button type="button" class="toggle-catalog-btn" id="toggle-catalog-btn">Ver más productos</button>
+        </div>
+
+        <div id="productos" class="catalog-sections is-collapsed"></div>
+      </section>
+
+      <section class="contact-section container reveal" id="contacto">
+        <article class="contact-panel">
+          <span class="section-kicker">Consultas</span>
+          <h2>Si algo te gustó, escribinos y te ayudamos con mucho cariño.</h2>
+          <p>
+            Podés consultar por colores, talles, stock o combinaciones desde WhatsApp de una forma simple y cercana.
+          </p>
+
+          <div class="contact-grid">
+            <div>
+              <span>Ubicación</span>
+              <strong>Comandante Andresito - Misiones</strong>
+            </div>
+            <div>
+              <span>Atención</span>
+              <strong>Te respondemos por WhatsApp</strong>
+            </div>
+            <div>
+              <span>Pedidos</span>
+              <strong>Consultanos por talles, colores y disponibilidad</strong>
+            </div>
+          </div>
+
+          <a href="#" class="btn btn-primary js-whatsapp-link">Escribir por WhatsApp</a>
+        </article>
+
+        <aside class="contact-card">
+          <h3>Dulce Bebé</h3>
+          <p class="contact-highlight">
+            Un espacio pensado para mostrar cada producto de forma simple, linda y delicada.
+          </p>
+          <ul class="contact-list">
+            <li>Ropita, ajuar y accesorios</li>
+            <li>Fotos reales de tus productos</li>
+            <li>Consultas rápidas y cercanas</li>
+          </ul>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <p class="footer-title">Dulce Bebé</p>
+          <p>Comandante Andresito - Misiones</p>
+        </div>
+        <div class="footer-links">
+          <a href="#hero">Inicio</a>
+          <a href="#catalogo">Catálogo</a>
+          <a href="#productos">Productos</a>
+          <a href="#contacto">Ubicación</a>
+          <a href="#quienes-somos">Quiénes somos</a>
+          <a href="admin.html">Admin</a>
+        </div>
+      </div>
+    </footer>
+
+    <a href="#" class="whatsapp-float js-whatsapp-link" aria-label="Contactar por WhatsApp">WA</a>
+
+    <script src="catalog-default.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
