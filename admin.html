@@ -24,6 +24,7 @@
           </div>
         </div>
         <div class="head-actions">
+          <button type="button" class="clients-toggle-btn" id="toggle-clients-btn" aria-expanded="false">Clientes registrados</button>
           <span class="admin-badge">Cloudinary conectado</span>
           <a href="index.html" class="back-link">Volver a la tienda</a>
         </div>
@@ -94,7 +95,7 @@
         </article>
       </section>
 
-      <section class="card list-card clients-card">
+      <section class="card list-card clients-card" id="clients-panel" aria-hidden="true">
         <div class="list-head">
           <h2>Clientes registrados</h2>
           <p id="clients-count">0 clientes</p>
@@ -104,6 +105,10 @@
     </main>
 
     <script src="catalog-default.js?v=2"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="clients-store.js"></script>
     <script src="admin.js?v=2"></script>
   </body>
 </html>

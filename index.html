@@ -43,6 +43,7 @@
         <div class="actions">
           <button type="button" class="action-link" id="open-register-btn">Registrarme</button>
           <button type="button" class="action-link" id="open-login-btn">Iniciar sesión</button>
+          <button type="button" class="action-link" id="logout-btn" hidden>Cerrar sesión</button>
           <button type="button" class="cart-pill" id="open-cart-btn" aria-label="Abrir pedido">
             Pedido <span id="cart-count">0</span>
           </button>
@@ -407,6 +408,10 @@
     <a href="#" class="whatsapp-float js-whatsapp-link" aria-label="Contactar por WhatsApp">WA</a>
 
     <script src="catalog-default.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="clients-store.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

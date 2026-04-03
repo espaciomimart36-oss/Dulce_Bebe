@@ -33,6 +33,8 @@ const allowedImageExtensions = new Set(['jpg', 'jpeg', 'png', 'mjpg']);
 
 let pendingImageFiles = [];
 let clientsPanelOpen = false;
+let customersCache = [];
+let stopCustomersSync = null;
 
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
 
@@ -101,12 +103,30 @@ const loadCustomers = () => {
   }
 };
 
+const startCustomersSync = () => {
+  if (typeof stopCustomersSync === 'function') {
+    stopCustomersSync();
+    stopCustomersSync = null;
+  }
+
+  if (!window.ClientsStore?.subscribeClients) {
+    customersCache = loadCustomers();
+    renderCustomers();
+    return;
+  }
+
+  stopCustomersSync = window.ClientsStore.subscribeClients((customers) => {
+    customersCache = Array.isArray(customers) ? customers : [];
+    renderCustomers();
+  });
+};
+
 const renderCustomers = () => {
   if (!clientsRoot || !clientsCountLabel) {
     return;
   }
 
-  const customers = loadCustomers();
+  const customers = customersCache.length > 0 ? customersCache : loadCustomers();
   clientsCountLabel.textContent = `${customers.length} cliente${customers.length === 1 ? '' : 's'}`;
 
   if (toggleClientsBtn) {
@@ -511,7 +531,7 @@ const initAdmin = () => {
 
   populateSectionSelect();
   renderProducts();
-  renderCustomers();
+  startCustomersSync();
   setClientsPanelOpen(false);
 };
 

@@ -16,6 +16,7 @@ const cartClearBtn = document.querySelector('#cart-clear-btn');
 const cartEmptyText = document.querySelector('#cart-empty-text');
 const openRegisterBtn = document.querySelector('#open-register-btn');
 const openLoginBtn = document.querySelector('#open-login-btn');
+const logoutBtn = document.querySelector('#logout-btn');
 const closeRegisterBtn = document.querySelector('#close-register-btn');
 const registerOverlay = document.querySelector('#register-overlay');
 const registerModal = document.querySelector('#register-modal');
@@ -736,6 +737,35 @@ const saveCustomerSession = (session) => {
   localStorage.setItem(customerSessionStorageKey, JSON.stringify(session));
 };
 
+const clearCustomerSession = () => {
+  localStorage.setItem(customerSessionStorageKey, JSON.stringify({ loggedIn: false, email: '' }));
+};
+
+const getCurrentSessionProfile = () => {
+  const session = loadCustomerSession();
+
+  if (!session.loggedIn || !session.email) {
+    return null;
+  }
+
+  const normalizedEmail = session.email.trim().toLowerCase();
+  const customer = loadRegisteredCustomers().find(
+    (entry) => entry.email?.trim().toLowerCase() === normalizedEmail,
+  );
+
+  if (customer) {
+    return customer;
+  }
+
+  const profile = loadCustomerProfile();
+
+  if (profile.email?.trim().toLowerCase() === normalizedEmail) {
+    return profile;
+  }
+
+  return null;
+};
+
 const loadRegisteredCustomers = () => {
   try {
     const raw = localStorage.getItem(customersStorageKey);
@@ -781,6 +811,12 @@ const upsertRegisteredCustomer = (profile) => {
   }
 
   saveRegisteredCustomers(customers);
+
+  if (window.ClientsStore?.upsertClient) {
+    window.ClientsStore.upsertClient(payload).catch(() => {
+      // Fallback local ya guardado arriba.
+    });
+  }
 };
 
 const saveCheckout = () => {
@@ -810,7 +846,15 @@ const saveCheckout = () => {
   );
 };
 
-const findCustomerByEmailAndPassword = (email, password) => {
+const findCustomerByEmailAndPassword = async (email, password) => {
+  if (window.ClientsStore?.findByCredentials) {
+    const firebaseMatch = await window.ClientsStore.findByCredentials(email, password);
+
+    if (firebaseMatch) {
+      return firebaseMatch;
+    }
+  }
+
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPassword = String(password || '').trim();
 
@@ -969,18 +1013,25 @@ const updateRegisterButtonState = () => {
   }
 
   const session = loadCustomerSession();
+  const sessionProfile = getCurrentSessionProfile();
+  const displayName = [sessionProfile?.name, sessionProfile?.lastName].filter(Boolean).join(' ').trim();
 
   if (openRegisterBtn) {
     openRegisterBtn.textContent = 'Registrarme';
+    openRegisterBtn.hidden = session.loggedIn;
   }
 
   if (openLoginBtn) {
     openLoginBtn.classList.toggle('is-active', session.loggedIn);
-    openLoginBtn.textContent = session.loggedIn ? 'Sesión iniciada' : 'Iniciar sesión';
+    openLoginBtn.textContent = session.loggedIn ? `${displayName || 'Cliente'} 🌸` : 'Iniciar sesión';
     openLoginBtn.setAttribute(
       'aria-label',
       session.loggedIn ? `Sesión iniciada: ${session.email || 'cliente'}` : 'Iniciar sesión',
     );
+  }
+
+  if (logoutBtn) {
+    logoutBtn.hidden = !session.loggedIn;
   }
 };
 
@@ -1000,6 +1051,16 @@ const openRegister = () => {
 };
 
 const openLogin = () => {
+  const session = loadCustomerSession();
+
+  if (session.loggedIn) {
+    if (loginHint) {
+      loginHint.textContent = 'Ya tenés una sesión activa.';
+    }
+
+    return;
+  }
+
   if (!loginModal || !loginOverlay) {
     return;
   }
@@ -1171,6 +1232,16 @@ const validateCheckout = () => {
 };
 
 const buildCartWhatsappLink = (enforceValidation = false) => {
+  const session = loadCustomerSession();
+
+  if (!session.loggedIn) {
+    if (enforceValidation && checkoutHint) {
+      checkoutHint.textContent = 'Para comprar tenés que iniciar sesión con tu cuenta registrada.';
+    }
+
+    return '#';
+  }
+
   if (cart.length === 0) {
     return buildWhatsappLink();
   }
@@ -1235,6 +1306,7 @@ const renderCart = () => {
   }
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const session = loadCustomerSession();
   cartCount.textContent = String(totalItems);
   updateShippingSummary();
   cartSendBtn.href = buildCartWhatsappLink(false);
@@ -1250,7 +1322,18 @@ const renderCart = () => {
   }
 
   cartEmptyText.hidden = true;
-  cartSendBtn.classList.remove('is-disabled');
+
+  if (!session.loggedIn) {
+    cartSendBtn.classList.add('is-disabled');
+    cartSendBtn.href = '#';
+
+    if (checkoutHint) {
+      checkoutHint.textContent = 'Para comprar tenés que iniciar sesión con tu cuenta registrada.';
+    }
+  } else {
+    cartSendBtn.classList.remove('is-disabled');
+  }
+
   cartClearBtn?.removeAttribute('disabled');
 
   cartItemsRoot.innerHTML = cart
@@ -1297,6 +1380,17 @@ const closeCart = () => {
 };
 
 const addToCart = (sectionId, item) => {
+  const session = loadCustomerSession();
+
+  if (!session.loggedIn) {
+    if (catalogSummary) {
+      catalogSummary.textContent = 'Iniciá sesión para poder comprar.';
+    }
+
+    openLogin();
+    return;
+  }
+
   const itemId = getItemId(sectionId, item);
   const availableStock = normalizeStock(item.stock);
 
@@ -1637,6 +1731,15 @@ cartClearBtn?.addEventListener('click', () => {
 
 openRegisterBtn?.addEventListener('click', openRegister);
 openLoginBtn?.addEventListener('click', openLogin);
+logoutBtn?.addEventListener('click', () => {
+  clearCustomerSession();
+  updateRegisterButtonState();
+  renderCart();
+
+  if (catalogSummary) {
+    catalogSummary.textContent = 'Sesión cerrada. Iniciá sesión para comprar.';
+  }
+});
 closeRegisterBtn?.addEventListener('click', closeRegister);
 registerOverlay?.addEventListener('click', closeRegister);
 closeLoginBtn?.addEventListener('click', closeLogin);
@@ -1733,7 +1836,7 @@ registerForm?.addEventListener('submit', (event) => {
   closeRegister();
 });
 
-loginForm?.addEventListener('submit', (event) => {
+loginForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   if (!loginEmailInput || !loginPasswordInput) {
@@ -1751,7 +1854,7 @@ loginForm?.addEventListener('submit', (event) => {
     return;
   }
 
-  const customer = findCustomerByEmailAndPassword(email, password);
+  const customer = await findCustomerByEmailAndPassword(email, password);
 
   if (!customer) {
     if (loginHint) {
