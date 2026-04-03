@@ -10,19 +10,20 @@
       href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="promo-strip" aria-label="Anuncios destacados">
       <div class="promo-track">
         <p>Envíos a todo el país</p>
+        <p>Fotos reales de cada producto</p>
         <p>Atención personalizada por WhatsApp</p>
-        <p>Nos encanta tenerte acá</p>
-        <p>Comandante Andresito - Misiones</p>
+        <p>Novedades suaves para bebés y peques</p>
         <p>Envíos a todo el país</p>
+        <p>Fotos reales de cada producto</p>
         <p>Atención personalizada por WhatsApp</p>
-        <p>Nos encanta tenerte acá</p>
-        <p>Comandante Andresito - Misiones</p>
+        <p>Novedades suaves para bebés y peques</p>
       </div>
     </div>
 
@@ -36,8 +37,13 @@
           <a href="#hero">Inicio</a>
           <a href="#catalogo">Catálogo</a>
           <a href="#contacto">Ubicación</a>
-          <a href="#productos" class="sale-link">Productos</a>
         </nav>
+
+        <div class="actions">
+          <button type="button" class="cart-pill" id="open-cart-btn" aria-label="Abrir pedido">
+            Pedido <span id="cart-count">0</span>
+          </button>
+        </div>
 
         <button class="menu-btn" aria-label="Abrir menú" aria-expanded="false">Menú</button>
       </div>
@@ -52,10 +58,20 @@
             Espero que encuentres lo que buscás. Si necesitás algo específico,
             no dudes en contarme y te ayudo con mucho cariño.
           </p>
+          <p class="hero-note">
+            Una tienda cálida, delicada y práctica para mostrar tu catálogo con fotos reales,
+            detalles claros y contacto directo.
+          </p>
 
           <div class="hero-cta">
             <a href="#catalogo" class="btn btn-primary">Ver catálogo</a>
             <a href="#" class="btn btn-ghost js-whatsapp-link">Consultar por WhatsApp</a>
+          </div>
+
+          <div class="hero-trust-list" aria-label="Beneficios rápidos">
+            <span class="hero-trust-pill">Fotos reales</span>
+            <span class="hero-trust-pill">Stock visual</span>
+            <span class="hero-trust-pill">Atención cercana</span>
           </div>
 
           <div class="hero-metrics" aria-label="Beneficios principales">
@@ -82,7 +98,6 @@
               <img src="img/logo.jpg" alt="Logo principal de Dulce Bebé" />
             </div>
           </div>
-          <div class="floating-card floating-bottom">Comandante Andresito - Misiones</div>
         </article>
       </section>
 
@@ -171,6 +186,7 @@
         </article>
 
         <aside class="contact-card">
+          <img class="contact-logo" src="img/logo.jpg" alt="Logo de Dulce Bebé" />
           <h3>Dulce Bebé</h3>
           <p class="contact-highlight">
             Un espacio pensado para mostrar cada producto de forma simple, linda y delicada.
@@ -187,19 +203,37 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div class="footer-brand">
-          <p class="footer-title">Dulce Bebé</p>
-          <p>Comandante Andresito - Misiones</p>
-        </div>
-        <div class="footer-links">
-          <a href="#hero">Inicio</a>
-          <a href="#catalogo">Catálogo</a>
-          <a href="#productos">Productos</a>
-          <a href="#contacto">Ubicación</a>
-          <a href="#quienes-somos">Quiénes somos</a>
-          <a href="admin.html">Admin</a>
+          <img class="footer-logo" src="img/logo.jpg" alt="Logo de Dulce Bebé" />
+          <div>
+            <p class="footer-title">Dulce Bebé</p>
+            <p>Boutique infantil con fotos reales y atención cercana.</p>
+          </div>
         </div>
       </div>
     </footer>
+
+    <div class="cart-overlay" id="cart-overlay" hidden></div>
+    <aside class="cart-drawer" id="cart-drawer" aria-label="Pedido" aria-hidden="true">
+      <div class="cart-drawer-head">
+        <div>
+          <p class="cart-kicker">Tu pedido</p>
+          <h2>Elegí varios productos</h2>
+        </div>
+        <button type="button" class="cart-close-btn" id="close-cart-btn" aria-label="Cerrar pedido">Cerrar</button>
+      </div>
+
+      <p class="cart-helper-text">
+        Armá tu selección y luego enviála por WhatsApp para coordinar envío y forma de pago.
+      </p>
+
+      <div class="cart-items" id="cart-items"></div>
+
+      <div class="cart-drawer-foot">
+        <p class="cart-empty-text" id="cart-empty-text">Todavía no agregaste productos.</p>
+        <a href="#" class="btn btn-primary cart-send-btn" id="cart-send-btn">Enviar pedido por WhatsApp</a>
+        <button type="button" class="btn btn-ghost cart-clear-btn" id="cart-clear-btn">Vaciar pedido</button>
+      </div>
+    </aside>
 
     <a href="#" class="whatsapp-float js-whatsapp-link" aria-label="Contactar por WhatsApp">WA</a>
 

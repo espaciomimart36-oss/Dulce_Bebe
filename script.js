@@ -5,9 +5,19 @@ const featuredRoot = document.querySelector('#catalog-featured');
 const catalogSummary = document.querySelector('#catalog-summary');
 const toggleCatalogBtn = document.querySelector('#toggle-catalog-btn');
 const whatsappLinks = document.querySelectorAll('.js-whatsapp-link');
+const openCartBtn = document.querySelector('#open-cart-btn');
+const closeCartBtn = document.querySelector('#close-cart-btn');
+const cartDrawer = document.querySelector('#cart-drawer');
+const cartOverlay = document.querySelector('#cart-overlay');
+const cartItemsRoot = document.querySelector('#cart-items');
+const cartCount = document.querySelector('#cart-count');
+const cartSendBtn = document.querySelector('#cart-send-btn');
+const cartClearBtn = document.querySelector('#cart-clear-btn');
+const cartEmptyText = document.querySelector('#cart-empty-text');
 const whatsappNumber = '5493757633601';
 const defaultWhatsappMessage = 'Hola! Quería hacer una consulta sobre Dulce Bebé. ¿Me podrían ayudar?';
 const catalogStorageKey = 'dulcebebe.catalog.v1';
+const cartStorageKey = 'dulcebebe.cart.v1';
 
 const defaultCatalogSections = window.DEFAULT_CATALOG_SECTIONS || [
   {
@@ -254,6 +264,14 @@ const defaultCatalogSections = window.DEFAULT_CATALOG_SECTIONS || [
 
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
 
+const slugify = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
 const loadCatalogSections = () => {
   try {
     const raw = localStorage.getItem(catalogStorageKey);
@@ -279,6 +297,27 @@ const saveCatalogSections = (sections) => {
 };
 
 let catalogSections = loadCatalogSections();
+
+const loadCart = () => {
+  try {
+    const raw = localStorage.getItem(cartStorageKey);
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+};
+
+const saveCart = (cart) => {
+  localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+};
+
+let cart = loadCart();
 
 if (!localStorage.getItem(catalogStorageKey)) {
   saveCatalogSections(catalogSections);
@@ -320,6 +359,144 @@ const buildWhatsappLink = (productName) => {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 };
 
+const buildCartWhatsappLink = () => {
+  if (cart.length === 0) {
+    return buildWhatsappLink();
+  }
+
+  const lines = cart.map((item) => {
+    const parts = [`- ${item.quantity} x ${item.title}`];
+
+    if (item.price) {
+      parts.push(`(${item.price})`);
+    }
+
+    return parts.join(' ');
+  });
+
+  const message = [
+    'Hola! Quiero consultar por este pedido de Dulce Bebe:',
+    '',
+    ...lines,
+    '',
+    'Quisiera coordinar envio y forma de pago.',
+  ].join('\n');
+
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+};
+
+const getItemId = (sectionId, item) => `${sectionId}::${slugify(item.title)}`;
+
+const renderCart = () => {
+  if (!cartItemsRoot || !cartCount || !cartSendBtn || !cartEmptyText) {
+    return;
+  }
+
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+  cartCount.textContent = String(totalItems);
+  cartSendBtn.href = buildCartWhatsappLink();
+  cartSendBtn.target = '_blank';
+  cartSendBtn.rel = 'noreferrer';
+
+  if (cart.length === 0) {
+    cartItemsRoot.innerHTML = '';
+    cartEmptyText.hidden = false;
+    cartSendBtn.classList.add('is-disabled');
+    cartClearBtn?.setAttribute('disabled', 'disabled');
+    return;
+  }
+
+  cartEmptyText.hidden = true;
+  cartSendBtn.classList.remove('is-disabled');
+  cartClearBtn?.removeAttribute('disabled');
+
+  cartItemsRoot.innerHTML = cart
+    .map(
+      (item) => `
+        <article class="cart-item-row">
+          <img class="cart-item-image" src="${assetPath(item.image)}" alt="${item.title}" />
+          <div class="cart-item-copy">
+            <p class="cart-item-title">${item.title}</p>
+            <p class="cart-item-meta">${item.label}${item.price ? ` · ${item.price}` : ''}</p>
+            <div class="cart-item-controls">
+              <button type="button" class="qty-btn" data-cart-action="decrease" data-cart-id="${item.id}">-</button>
+              <span class="qty-value">${item.quantity}</span>
+              <button type="button" class="qty-btn" data-cart-action="increase" data-cart-id="${item.id}">+</button>
+              <button type="button" class="cart-remove-btn" data-cart-action="remove" data-cart-id="${item.id}">Quitar</button>
+            </div>
+          </div>
+        </article>
+      `,
+    )
+    .join('');
+};
+
+const openCart = () => {
+  if (!cartDrawer || !cartOverlay) {
+    return;
+  }
+
+  cartDrawer.classList.add('is-open');
+  cartDrawer.setAttribute('aria-hidden', 'false');
+  cartOverlay.hidden = false;
+};
+
+const closeCart = () => {
+  if (!cartDrawer || !cartOverlay) {
+    return;
+  }
+
+  cartDrawer.classList.remove('is-open');
+  cartDrawer.setAttribute('aria-hidden', 'true');
+  cartOverlay.hidden = true;
+};
+
+const addToCart = (sectionId, item) => {
+  const itemId = getItemId(sectionId, item);
+  const existing = cart.find((entry) => entry.id === itemId);
+
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.unshift({
+      id: itemId,
+      sectionId,
+      title: item.title,
+      label: item.label || 'Producto',
+      price: item.price || '',
+      image: item.images?.[0] || '',
+      quantity: 1,
+    });
+  }
+
+  saveCart(cart);
+  renderCart();
+  openCart();
+};
+
+const updateCartItemQuantity = (itemId, delta) => {
+  const item = cart.find((entry) => entry.id === itemId);
+
+  if (!item) {
+    return;
+  }
+
+  item.quantity += delta;
+
+  if (item.quantity <= 0) {
+    cart = cart.filter((entry) => entry.id !== itemId);
+  }
+
+  saveCart(cart);
+  renderCart();
+};
+
+const removeCartItem = (itemId) => {
+  cart = cart.filter((entry) => entry.id !== itemId);
+  saveCart(cart);
+  renderCart();
+};
+
 const renderThumbs = (item) => {
   if (item.images.length === 1) {
     return '';
@@ -349,8 +526,8 @@ const renderThumbs = (item) => {
   `;
 };
 
-const renderItem = (item, helper) => `
-  <article class="catalog-card reveal">
+const renderItem = (item, helper, sectionId) => `
+  <article class="catalog-card reveal" data-section-id="${sectionId}" data-item-id="${getItemId(sectionId, item)}">
     <div class="catalog-media">
       ${item.promo ? `<span class="item-promo">${item.promo}</span>` : ''}
       <img
@@ -369,14 +546,17 @@ const renderItem = (item, helper) => `
       ${renderThumbs(item)}
       <div class="catalog-footer">
         <p>${helper}</p>
-        <a href="${buildWhatsappLink(item.title)}" class="consult-link js-whatsapp-link" target="_blank" rel="noreferrer">Consultar</a>
+        <div class="catalog-cta-row">
+          <button type="button" class="cart-add-btn" data-cart-add="${getItemId(sectionId, item)}">Agregar</button>
+          <a href="${buildWhatsappLink(item.title)}" class="consult-link js-whatsapp-link" target="_blank" rel="noreferrer">Consultar</a>
+        </div>
       </div>
     </div>
   </article>
 `;
 
-const renderFeaturedItem = (item) => `
-  <article class="catalog-card featured-card reveal">
+const renderFeaturedItem = (item, sectionId) => `
+  <article class="catalog-card featured-card reveal" data-section-id="${sectionId}" data-item-id="${getItemId(sectionId, item)}">
     <div class="catalog-media">
       ${item.promo ? `<span class="item-promo">${item.promo}</span>` : ''}
       <img
@@ -394,7 +574,10 @@ const renderFeaturedItem = (item) => `
       ${item.price ? `<p class="item-price">${item.price}</p>` : ''}
       <div class="catalog-footer">
         <p>Consultanos por este producto.</p>
-        <a href="${buildWhatsappLink(item.title)}" class="consult-link js-whatsapp-link" target="_blank" rel="noreferrer">Consultar</a>
+        <div class="catalog-cta-row">
+          <button type="button" class="cart-add-btn" data-cart-add="${getItemId(sectionId, item)}">Agregar</button>
+          <a href="${buildWhatsappLink(item.title)}" class="consult-link js-whatsapp-link" target="_blank" rel="noreferrer">Consultar</a>
+        </div>
       </div>
     </div>
   </article>
@@ -410,7 +593,7 @@ const renderSection = (section) => `
       <p>${section.description}</p>
     </div>
     <div class="catalog-grid">
-      ${section.items.map((item) => renderItem(item, section.helper)).join('')}
+      ${section.items.map((item) => renderItem(item, section.helper, section.id)).join('')}
     </div>
   </section>
 `;
@@ -440,15 +623,30 @@ if (menuBtn && nav) {
 
 if (catalogRoot) {
   const allItems = catalogSections.flatMap((section) => section.items);
+  const itemIndex = new Map(
+    catalogSections.flatMap((section) =>
+      section.items.map((item) => [getItemId(section.id, item), { item, sectionId: section.id }]),
+    ),
+  );
   const featuredItems = featuredTitles
-    .map((title) => allItems.find((item) => item.title === title))
+    .map((title) => {
+      const section = catalogSections.find((entry) => entry.items.some((item) => item.title === title));
+      const item = section?.items.find((entry) => entry.title === title);
+
+      if (!section || !item) {
+        return null;
+      }
+
+      return { item, sectionId: section.id };
+    })
     .filter(Boolean);
 
   if (featuredRoot) {
-    featuredRoot.innerHTML = featuredItems.map((item) => renderFeaturedItem(item)).join('');
+    featuredRoot.innerHTML = featuredItems.map(({ item, sectionId }) => renderFeaturedItem(item, sectionId)).join('');
   }
 
   catalogRoot.innerHTML = catalogSections.map((section) => renderSection(section)).join('');
+  renderCart();
 
   if (catalogSummary) {
     catalogSummary.textContent = 'Viendo selección destacada.';
@@ -477,6 +675,18 @@ if (catalogRoot) {
   }
 
   catalogRoot.addEventListener('click', (event) => {
+    const addButton = event.target.closest('[data-cart-add]');
+
+    if (addButton) {
+      const match = itemIndex.get(addButton.dataset.cartAdd || '');
+
+      if (match) {
+        addToCart(match.sectionId, match.item);
+      }
+
+      return;
+    }
+
     const thumb = event.target.closest('.thumb-btn');
 
     if (!thumb) {
@@ -502,7 +712,55 @@ if (catalogRoot) {
 
     thumb.classList.add('is-active');
   });
+
+  featuredRoot?.addEventListener('click', (event) => {
+    const addButton = event.target.closest('[data-cart-add]');
+
+    if (!addButton) {
+      return;
+    }
+
+    const match = itemIndex.get(addButton.dataset.cartAdd || '');
+
+    if (match) {
+      addToCart(match.sectionId, match.item);
+    }
+  });
 }
+
+cartItemsRoot?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-cart-action]');
+
+  if (!button) {
+    return;
+  }
+
+  const action = button.dataset.cartAction;
+  const itemId = button.dataset.cartId || '';
+
+  if (action === 'increase') {
+    updateCartItemQuantity(itemId, 1);
+    return;
+  }
+
+  if (action === 'decrease') {
+    updateCartItemQuantity(itemId, -1);
+    return;
+  }
+
+  if (action === 'remove') {
+    removeCartItem(itemId);
+  }
+});
+
+openCartBtn?.addEventListener('click', openCart);
+closeCartBtn?.addEventListener('click', closeCart);
+cartOverlay?.addEventListener('click', closeCart);
+cartClearBtn?.addEventListener('click', () => {
+  cart = [];
+  saveCart(cart);
+  renderCart();
+});
 
 whatsappLinks.forEach((link) => {
   if (link.classList.contains('consult-link')) {
