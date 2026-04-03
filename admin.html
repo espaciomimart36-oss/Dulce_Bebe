@@ -58,8 +58,14 @@
             </label>
 
             <label>
-              Imagenes (una por linea)
-              <textarea id="images" rows="6" placeholder="vestidodewafleknit.jpg"></textarea>
+              Subir imagenes reales (JPG, JPEG, PNG)
+              <input id="image-files" type="file" accept=".jpg,.jpeg,.png,.mjpg,image/jpeg,image/png" multiple />
+              <small id="image-status">No hay archivos seleccionados.</small>
+            </label>
+
+            <label>
+              Imagenes por nombre o URL (opcional, una por linea)
+              <textarea id="images" rows="4" placeholder="vestidodewafleknit.jpg"></textarea>
             </label>
 
             <div class="form-actions">

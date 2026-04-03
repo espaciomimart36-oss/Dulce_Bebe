@@ -120,50 +120,14 @@ body {
   .logo {
     display: inline-flex;
     align-items: center;
-    gap: 0.9rem;
     flex-shrink: 0;
   }
 
   .logo-mark {
-    width: 52px;
-    height: 52px;
-    padding: 0.35rem;
-    border-radius: 18px;
-    background: linear-gradient(160deg, #fff 0%, #f3dfd6 100%);
+    width: clamp(120px, 14vw, 172px);
+    height: auto;
+    border-radius: 14px;
     box-shadow: 0 10px 24px rgba(116, 63, 74, 0.12);
-  }
-
-  .logo-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 0.22rem;
-  }
-
-  .logo-text {
-    font-family: "Allura", cursive;
-    font-size: 2.35rem;
-    font-weight: 400;
-    line-height: 0.76;
-    letter-spacing: 0.02em;
-  }
-
-  .location-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    color: var(--berry);
-    font-size: 0.67rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: none;
-  }
-
-  .location-dot {
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand), #e48b78);
-    box-shadow: 0 0 0 5px rgba(183, 109, 99, 0.12);
   }
 
   .main-nav {
@@ -1576,17 +1540,8 @@ body {
 
   @media (max-width: 560px) {
     .logo-mark {
-      width: 50px;
-      height: 50px;
-      border-radius: 18px;
-    }
-
-    .logo-text {
-      font-size: 1.7rem;
-    }
-
-    .location-chip {
-      font-size: 0.62rem;
+      width: 112px;
+      border-radius: 12px;
     }
 
     .hero-copy,

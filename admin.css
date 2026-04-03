@@ -163,6 +163,16 @@ textarea {
   resize: vertical;
 }
 
+#image-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+#image-status.is-error {
+  color: #b52c2c;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

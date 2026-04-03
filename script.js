@@ -284,7 +284,22 @@ if (!localStorage.getItem(catalogStorageKey)) {
   saveCatalogSections(catalogSections);
 }
 
-const assetPath = (fileName) => encodeURI(`img/${fileName}`);
+const assetPath = (fileName) => {
+  if (typeof fileName !== 'string') {
+    return '';
+  }
+
+  if (
+    fileName.startsWith('data:image/') ||
+    fileName.startsWith('http://') ||
+    fileName.startsWith('https://') ||
+    fileName.startsWith('blob:')
+  ) {
+    return fileName;
+  }
+
+  return encodeURI(`img/${fileName}`);
+};
 
 const featuredTitles = [
   'Ajuar clásico',

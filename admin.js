@@ -7,6 +7,8 @@ const labelInput = document.querySelector('#label');
 const titleInput = document.querySelector('#title');
 const priceInput = document.querySelector('#price');
 const promoInput = document.querySelector('#promo');
+const imageFilesInput = document.querySelector('#image-files');
+const imageStatus = document.querySelector('#image-status');
 const imagesInput = document.querySelector('#images');
 const productsRoot = document.querySelector('#products');
 const countLabel = document.querySelector('#count');
@@ -16,7 +18,35 @@ const editSectionInput = document.querySelector('#edit-section');
 const editIndexInput = document.querySelector('#edit-index');
 const formTitle = document.querySelector('#form-title');
 
+const cloudinaryCloudName = 'dazpzsbwm';
+const cloudinaryUploadPreset = 'dulce_bebe_sin_firmar';
+const cloudinaryUploadFolder = 'dulce_bebe';
+
+const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png']);
+const allowedImageExtensions = new Set(['jpg', 'jpeg', 'png', 'mjpg']);
+
+let pendingImageFiles = [];
+
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
+
+const getFileExtension = (fileName) => {
+  const dotIndex = fileName.lastIndexOf('.');
+
+  if (dotIndex < 0) {
+    return '';
+  }
+
+  return fileName.slice(dotIndex + 1).toLowerCase();
+};
+
+const setImageStatus = (message, isError = false) => {
+  if (!imageStatus) {
+    return;
+  }
+
+  imageStatus.textContent = message;
+  imageStatus.classList.toggle('is-error', isError);
+};
 
 const loadCatalog = () => {
   try {
@@ -41,6 +71,8 @@ let catalog = loadCatalog();
 
 const resetForm = () => {
   form.reset();
+  pendingImageFiles = [];
+  setImageStatus('No hay archivos seleccionados.');
   editSectionInput.value = '';
   editIndexInput.value = '';
   formTitle.textContent = 'Nuevo producto';
@@ -51,6 +83,79 @@ const parseImages = (value) =>
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
+
+const uniq = (values) => values.filter((value, index) => values.indexOf(value) === index);
+
+const uploadImageToCloudinary = async (file) => {
+  const endpoint = `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`;
+  const formData = new FormData();
+
+  formData.append('file', file);
+  formData.append('upload_preset', cloudinaryUploadPreset);
+  formData.append('folder', cloudinaryUploadFolder);
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.secure_url) {
+    throw new Error(data?.error?.message || 'No se pudo subir la imagen a Cloudinary.');
+  }
+
+  return data.secure_url;
+};
+
+const uploadPendingImages = async () => {
+  if (pendingImageFiles.length === 0) {
+    return [];
+  }
+
+  setImageStatus(`Subiendo ${pendingImageFiles.length} imagen(es) a Cloudinary...`);
+  const uploadedUrls = [];
+
+  for (const file of pendingImageFiles) {
+    const imageUrl = await uploadImageToCloudinary(file);
+    uploadedUrls.push(imageUrl);
+  }
+
+  return uploadedUrls;
+};
+
+const readImageFiles = async (files) => {
+  const selectedFiles = Array.from(files || []);
+
+  if (selectedFiles.length === 0) {
+    pendingImageFiles = [];
+    setImageStatus('No hay archivos seleccionados.');
+    return;
+  }
+
+  const hasInvalidFile = selectedFiles.some((file) => {
+    const extension = getFileExtension(file.name);
+    const validByExtension = allowedImageExtensions.has(extension);
+    const validByMime = !file.type || allowedImageMimeTypes.has(file.type);
+    return !(validByExtension && validByMime);
+  });
+
+  if (hasInvalidFile) {
+    pendingImageFiles = [];
+    imageFilesInput.value = '';
+    setImageStatus('Solo se permiten archivos JPG, JPEG, MJPG o PNG.', true);
+    return;
+  }
+
+  pendingImageFiles = selectedFiles;
+  const suffix = pendingImageFiles.length === 1 ? '' : 's';
+  setImageStatus(`${pendingImageFiles.length} archivo${suffix} listo${suffix} para subir.`);
+};
+
+const mergeImages = (uploadedUrls) => {
+  const manualImages = parseImages(imagesInput.value);
+  return uniq([...uploadedUrls, ...manualImages]);
+};
 
 const buildMeta = (item) => {
   const parts = [item.label || 'Sin categoría'];
@@ -123,7 +228,11 @@ const hydrateForm = (sectionId, index) => {
   titleInput.value = item.title || '';
   priceInput.value = item.price || '';
   promoInput.value = item.promo || '';
+  pendingImageFiles = [];
   imagesInput.value = (item.images || []).join('\n');
+  imageFilesInput.value = '';
+  setImageStatus('No hay archivos seleccionados.');
+
   editSectionInput.value = sectionId;
   editIndexInput.value = String(index);
 };
@@ -141,7 +250,7 @@ const removeItem = (sectionId, index) => {
   resetForm();
 };
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const sectionId = sectionSelect.value;
@@ -151,12 +260,21 @@ form.addEventListener('submit', (event) => {
     return;
   }
 
+  let uploadedUrls = [];
+
+  try {
+    uploadedUrls = await uploadPendingImages();
+  } catch (error) {
+    setImageStatus(error.message || 'No se pudieron subir las imagenes.', true);
+    return;
+  }
+
   const payload = {
     label: labelInput.value.trim(),
     title: titleInput.value.trim(),
     price: priceInput.value.trim(),
     promo: promoInput.value.trim(),
-    images: parseImages(imagesInput.value),
+    images: mergeImages(uploadedUrls),
   };
 
   if (!payload.title || payload.images.length === 0) {
@@ -179,6 +297,12 @@ form.addEventListener('submit', (event) => {
   renderProducts();
   resetForm();
 });
+
+if (imageFilesInput) {
+  imageFilesInput.addEventListener('change', () => {
+    readImageFiles(imageFilesInput.files);
+  });
+}
 
 productsRoot.addEventListener('click', (event) => {
   const button = event.target.closest('button[data-action]');
