@@ -40,6 +40,7 @@
         </nav>
 
         <div class="actions">
+          <button type="button" class="action-link" id="open-register-btn">Registrarme</button>
           <button type="button" class="cart-pill" id="open-cart-btn" aria-label="Abrir pedido">
             Pedido <span id="cart-count">0</span>
           </button>
@@ -226,6 +227,55 @@
         Armá tu selección y luego enviála por WhatsApp para coordinar envío y forma de pago.
       </p>
 
+      <section class="checkout-panel" aria-label="Datos para el pedido">
+        <h3>Datos de envío</h3>
+        <div class="checkout-grid">
+          <label>
+            Nombre
+            <input type="text" id="checkout-name" placeholder="Ejemplo: Ana" autocomplete="given-name" />
+          </label>
+          <label>
+            Apellido
+            <input type="text" id="checkout-lastname" placeholder="Ejemplo: Pérez" autocomplete="family-name" />
+          </label>
+          <label class="full">
+            Email
+            <input type="email" id="checkout-email" placeholder="Ejemplo: ana@email.com" autocomplete="email" />
+          </label>
+          <label class="full">
+            Telefono
+            <input type="tel" id="checkout-phone" placeholder="Ejemplo: +54 9 3757 555123" autocomplete="tel" />
+          </label>
+          <label>
+            Provincia
+            <select id="checkout-province"></select>
+          </label>
+          <label>
+            Código postal
+            <input type="text" id="checkout-cp" inputmode="numeric" placeholder="Ejemplo: 3364" />
+          </label>
+          <label class="full">
+            Localidad
+            <input type="text" id="checkout-city" placeholder="Se completa por código postal" />
+          </label>
+        </div>
+        <p class="checkout-hint" id="checkout-hint">Si ingresás 3364 detectamos Comandante Andresito automáticamente.</p>
+      </section>
+
+      <section class="shipping-summary" aria-label="Resumen de envío">
+        <p class="shipping-line"><strong>Envíos:</strong> ViaCargo a todo el país.</p>
+        <p class="shipping-line" id="shipping-base-text">Costo base estimado: $0</p>
+        <p class="shipping-line" id="shipping-final-text">Costo final estimado: $0</p>
+        <div class="shipping-promo promo-half" id="promo-half" hidden>
+          <span class="promo-icon" aria-hidden="true">🎁 1/2</span>
+          <p>Compras desde $50.000 pagan solo el 50% del envío.</p>
+        </div>
+        <div class="shipping-promo promo-free" id="promo-free" hidden>
+          <span class="promo-icon" aria-hidden="true">🎁</span>
+          <p>Compras desde $100.000 tienen envío GRATIS.</p>
+        </div>
+      </section>
+
       <div class="cart-items" id="cart-items"></div>
 
       <div class="cart-drawer-foot">
@@ -234,6 +284,56 @@
         <button type="button" class="btn btn-ghost cart-clear-btn" id="cart-clear-btn">Vaciar pedido</button>
       </div>
     </aside>
+
+    <div class="register-overlay" id="register-overlay" hidden></div>
+    <section class="register-modal" id="register-modal" aria-label="Registro de cliente" aria-hidden="true">
+      <div class="register-head">
+        <div>
+          <p class="cart-kicker">Registro</p>
+          <h2>Crear perfil de cliente</h2>
+        </div>
+        <button type="button" class="cart-close-btn" id="close-register-btn" aria-label="Cerrar registro">Cerrar</button>
+      </div>
+
+      <p class="cart-helper-text">
+        Al registrarte, tus datos se cargan automaticamente al momento de pedir por WhatsApp.
+      </p>
+
+      <form id="register-form" class="register-form" novalidate>
+        <div class="checkout-grid">
+          <label>
+            Nombre
+            <input type="text" id="register-name" placeholder="Ejemplo: Ana" autocomplete="given-name" required />
+          </label>
+          <label>
+            Apellido
+            <input type="text" id="register-lastname" placeholder="Ejemplo: Perez" autocomplete="family-name" required />
+          </label>
+          <label class="full">
+            Email
+            <input type="email" id="register-email" placeholder="Ejemplo: ana@email.com" autocomplete="email" required />
+          </label>
+          <label class="full">
+            Telefono
+            <input type="tel" id="register-phone" placeholder="Ejemplo: +54 9 3757 555123" autocomplete="tel" required />
+          </label>
+          <label>
+            Provincia
+            <select id="register-province" required></select>
+          </label>
+          <label>
+            Codigo postal
+            <input type="text" id="register-cp" inputmode="numeric" placeholder="Ejemplo: 3364" required />
+          </label>
+          <label class="full">
+            Localidad
+            <input type="text" id="register-city" placeholder="Se completa por codigo postal" required />
+          </label>
+        </div>
+        <p class="checkout-hint" id="register-hint">Con el codigo postal completamos provincia y localidad automaticamente.</p>
+        <button type="submit" class="btn btn-primary register-submit-btn">Guardar datos</button>
+      </form>
+    </section>
 
     <a href="#" class="whatsapp-float js-whatsapp-link" aria-label="Contactar por WhatsApp">WA</a>
 

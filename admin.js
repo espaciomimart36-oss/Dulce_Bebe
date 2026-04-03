@@ -13,6 +13,8 @@ const imageStatus = document.querySelector('#image-status');
 const imagesInput = document.querySelector('#images');
 const productsRoot = document.querySelector('#products');
 const countLabel = document.querySelector('#count');
+const clientsRoot = document.querySelector('#clients');
+const clientsCountLabel = document.querySelector('#clients-count');
 const cancelEditBtn = document.querySelector('#cancel-edit');
 const resetDefaultsBtn = document.querySelector('#reset-defaults');
 const editSectionInput = document.querySelector('#edit-section');
@@ -22,6 +24,7 @@ const formTitle = document.querySelector('#form-title');
 const cloudinaryCloudName = 'dazpzsbwm';
 const cloudinaryUploadPreset = 'dulce_bebe_sin_firmar';
 const cloudinaryUploadFolder = 'dulce_bebe';
+const customersStorageKey = 'dulcebebe.customers.v1';
 
 const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png']);
 const allowedImageExtensions = new Set(['jpg', 'jpeg', 'png', 'mjpg']);
@@ -48,6 +51,82 @@ const normalizeCatalogStock = (sections) =>
       stock: normalizeStock(item.stock),
     })),
   }));
+
+const normalizePhone = (value) => {
+  let digits = String(value || '').replace(/\D/g, '');
+
+  while (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  if (!digits) {
+    return '';
+  }
+
+  if (digits.startsWith('549')) {
+    return digits;
+  }
+
+  if (digits.startsWith('54')) {
+    return `549${digits.slice(2)}`;
+  }
+
+  if (digits.startsWith('9')) {
+    return `54${digits}`;
+  }
+
+  return `549${digits}`;
+};
+
+const buildWhatsappDirectLink = (rawPhone) => {
+  const normalized = normalizePhone(rawPhone);
+  return normalized ? `https://wa.me/${normalized}` : '#';
+};
+
+const loadCustomers = () => {
+  try {
+    const raw = localStorage.getItem(customersStorageKey);
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+};
+
+const renderCustomers = () => {
+  if (!clientsRoot || !clientsCountLabel) {
+    return;
+  }
+
+  const customers = loadCustomers();
+  clientsCountLabel.textContent = `${customers.length} cliente${customers.length === 1 ? '' : 's'}`;
+
+  if (customers.length === 0) {
+    clientsRoot.innerHTML = '<p class="empty-clients">Todavia no hay clientes registrados.</p>';
+    return;
+  }
+
+  clientsRoot.innerHTML = customers
+    .map(
+      (customer) => `
+        <article class="client-row">
+          <div class="client-main">
+            <p class="client-name">${customer.name || ''} ${customer.lastName || ''}</p>
+            <p class="client-meta">Email: ${customer.email || '-'}</p>
+            <p class="client-meta">Telefono: ${customer.phone ? `+${normalizePhone(customer.phone)}` : '-'}</p>
+            <p class="client-meta">${customer.city || '-'}, ${customer.province || '-'} · CP ${customer.cp || '-'}</p>
+          </div>
+          <a class="client-wpp" href="${buildWhatsappDirectLink(customer.phone)}" target="_blank" rel="noreferrer">WhatsApp</a>
+        </article>
+      `,
+    )
+    .join('');
+};
 
 const getFileExtension = (fileName) => {
   const dotIndex = fileName.lastIndexOf('.');
@@ -407,6 +486,7 @@ const initAdmin = () => {
 
   populateSectionSelect();
   renderProducts();
+  renderCustomers();
 };
 
 if (adminApp) {

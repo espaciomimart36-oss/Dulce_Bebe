@@ -22,6 +22,7 @@ const registerForm = document.querySelector('#register-form');
 const registerNameInput = document.querySelector('#register-name');
 const registerLastNameInput = document.querySelector('#register-lastname');
 const registerEmailInput = document.querySelector('#register-email');
+const registerPhoneInput = document.querySelector('#register-phone');
 const registerProvinceSelect = document.querySelector('#register-province');
 const registerCpInput = document.querySelector('#register-cp');
 const registerCityInput = document.querySelector('#register-city');
@@ -29,6 +30,7 @@ const registerHint = document.querySelector('#register-hint');
 const checkoutNameInput = document.querySelector('#checkout-name');
 const checkoutLastNameInput = document.querySelector('#checkout-lastname');
 const checkoutEmailInput = document.querySelector('#checkout-email');
+const checkoutPhoneInput = document.querySelector('#checkout-phone');
 const checkoutProvinceSelect = document.querySelector('#checkout-province');
 const checkoutCpInput = document.querySelector('#checkout-cp');
 const checkoutCityInput = document.querySelector('#checkout-city');
@@ -43,6 +45,7 @@ const catalogStorageKey = 'dulcebebe.catalog.v1';
 const cartStorageKey = 'dulcebebe.cart.v1';
 const checkoutStorageKey = 'dulcebebe.checkout.v1';
 const customerProfileStorageKey = 'dulcebebe.customer-profile.v1';
+const customersStorageKey = 'dulcebebe.customers.v1';
 
 const defaultCatalogSections = window.DEFAULT_CATALOG_SECTIONS || [
   {
@@ -467,6 +470,47 @@ const normalizeText = (value) =>
 
 const normalizeProvinceName = (value) => normalizeText(value).replace(/\s+/g, ' ');
 
+const normalizePhone = (value) => {
+  let digits = String(value || '').replace(/\D/g, '');
+
+  while (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  if (!digits) {
+    return '';
+  }
+
+  if (digits.startsWith('549')) {
+    return digits;
+  }
+
+  if (digits.startsWith('54')) {
+    return `549${digits.slice(2)}`;
+  }
+
+  if (digits.startsWith('9')) {
+    return `54${digits}`;
+  }
+
+  return `549${digits}`;
+};
+
+const formatPhoneDisplay = (value) => {
+  const normalized = normalizePhone(value);
+
+  if (!normalized) {
+    return '';
+  }
+
+  return `+${normalized}`;
+};
+
+const buildWhatsappDirectLink = (rawPhone) => {
+  const normalized = normalizePhone(rawPhone);
+  return normalized ? `https://wa.me/${normalized}` : '#';
+};
+
 const formatMoneyAr = (value) =>
   new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -498,6 +542,7 @@ const loadCheckout = () => {
         name: '',
         lastName: '',
         email: '',
+        phone: '',
         province: 'Misiones',
         cp: '',
         city: '',
@@ -509,6 +554,7 @@ const loadCheckout = () => {
       name: parsed?.name || '',
       lastName: parsed?.lastName || '',
       email: parsed?.email || '',
+      phone: parsed?.phone || '',
       province: parsed?.province || 'Misiones',
       cp: parsed?.cp || '',
       city: parsed?.city || '',
@@ -518,6 +564,7 @@ const loadCheckout = () => {
       name: '',
       lastName: '',
       email: '',
+      phone: '',
       province: 'Misiones',
       cp: '',
       city: '',
@@ -534,6 +581,7 @@ const loadCustomerProfile = () => {
         name: '',
         lastName: '',
         email: '',
+        phone: '',
         province: 'Misiones',
         cp: '',
         city: '',
@@ -546,6 +594,7 @@ const loadCustomerProfile = () => {
       name: parsed?.name || '',
       lastName: parsed?.lastName || '',
       email: parsed?.email || '',
+      phone: parsed?.phone || '',
       province: parsed?.province || 'Misiones',
       cp: parsed?.cp || '',
       city: parsed?.city || '',
@@ -555,6 +604,7 @@ const loadCustomerProfile = () => {
       name: '',
       lastName: '',
       email: '',
+      phone: '',
       province: 'Misiones',
       cp: '',
       city: '',
@@ -566,11 +616,58 @@ const saveCustomerProfile = (profile) => {
   localStorage.setItem(customerProfileStorageKey, JSON.stringify(profile));
 };
 
+const loadRegisteredCustomers = () => {
+  try {
+    const raw = localStorage.getItem(customersStorageKey);
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+};
+
+const saveRegisteredCustomers = (customers) => {
+  localStorage.setItem(customersStorageKey, JSON.stringify(customers));
+};
+
+const upsertRegisteredCustomer = (profile) => {
+  const customers = loadRegisteredCustomers();
+  const normalizedEmail = profile.email.trim().toLowerCase();
+  const normalizedPhone = normalizePhone(profile.phone);
+  const now = new Date().toISOString();
+
+  const index = customers.findIndex(
+    (entry) =>
+      entry.email?.trim().toLowerCase() === normalizedEmail || normalizePhone(entry.phone) === normalizedPhone,
+  );
+
+  const payload = {
+    ...profile,
+    phone: normalizedPhone,
+    updatedAt: now,
+    createdAt: customers[index]?.createdAt || now,
+  };
+
+  if (index >= 0) {
+    customers[index] = payload;
+  } else {
+    customers.unshift(payload);
+  }
+
+  saveRegisteredCustomers(customers);
+};
+
 const saveCheckout = () => {
   if (
     !checkoutNameInput ||
     !checkoutLastNameInput ||
     !checkoutEmailInput ||
+    !checkoutPhoneInput ||
     !checkoutProvinceSelect ||
     !checkoutCpInput ||
     !checkoutCityInput
@@ -584,6 +681,7 @@ const saveCheckout = () => {
       name: checkoutNameInput.value.trim(),
       lastName: checkoutLastNameInput.value.trim(),
       email: checkoutEmailInput.value.trim(),
+      phone: normalizePhone(checkoutPhoneInput.value),
       province: checkoutProvinceSelect.value,
       cp: checkoutCpInput.value.trim(),
       city: checkoutCityInput.value.trim(),
@@ -660,6 +758,7 @@ const syncProfileToCheckout = (profile) => {
     !checkoutNameInput ||
     !checkoutLastNameInput ||
     !checkoutEmailInput ||
+    !checkoutPhoneInput ||
     !checkoutProvinceSelect ||
     !checkoutCpInput ||
     !checkoutCityInput
@@ -670,6 +769,7 @@ const syncProfileToCheckout = (profile) => {
   checkoutNameInput.value = profile.name || '';
   checkoutLastNameInput.value = profile.lastName || '';
   checkoutEmailInput.value = profile.email || '';
+  checkoutPhoneInput.value = formatPhoneDisplay(profile.phone || '');
   checkoutProvinceSelect.value = argentinaProvinces.includes(profile.province) ? profile.province : 'Misiones';
   checkoutCpInput.value = profile.cp || '';
   checkoutCityInput.value = profile.city || '';
@@ -679,11 +779,18 @@ const hydrateCheckout = () => {
   const checkout = loadCheckout();
   const profile = loadCustomerProfile();
 
-  if (!checkoutNameInput || !checkoutLastNameInput || !checkoutEmailInput || !checkoutCpInput || !checkoutCityInput) {
+  if (
+    !checkoutNameInput ||
+    !checkoutLastNameInput ||
+    !checkoutEmailInput ||
+    !checkoutPhoneInput ||
+    !checkoutCpInput ||
+    !checkoutCityInput
+  ) {
     return;
   }
 
-  if (profile.name || profile.lastName || profile.email || profile.cp || profile.city) {
+  if (profile.name || profile.lastName || profile.email || profile.phone || profile.cp || profile.city) {
     syncProfileToCheckout(profile);
     saveCheckout();
     return;
@@ -692,6 +799,7 @@ const hydrateCheckout = () => {
   checkoutNameInput.value = checkout.name;
   checkoutLastNameInput.value = checkout.lastName;
   checkoutEmailInput.value = checkout.email;
+  checkoutPhoneInput.value = formatPhoneDisplay(checkout.phone || '');
   checkoutProvinceSelect.value = argentinaProvinces.includes(checkout.province) ? checkout.province : 'Misiones';
   checkoutCpInput.value = checkout.cp;
   checkoutCityInput.value = checkout.city;
@@ -704,6 +812,7 @@ const hydrateRegister = () => {
     !registerNameInput ||
     !registerLastNameInput ||
     !registerEmailInput ||
+    !registerPhoneInput ||
     !registerProvinceSelect ||
     !registerCpInput ||
     !registerCityInput
@@ -714,9 +823,20 @@ const hydrateRegister = () => {
   registerNameInput.value = profile.name;
   registerLastNameInput.value = profile.lastName;
   registerEmailInput.value = profile.email;
+  registerPhoneInput.value = formatPhoneDisplay(profile.phone || '');
   registerProvinceSelect.value = argentinaProvinces.includes(profile.province) ? profile.province : 'Misiones';
   registerCpInput.value = profile.cp;
   registerCityInput.value = profile.city;
+};
+
+const updateRegisterButtonState = () => {
+  if (!openRegisterBtn) {
+    return;
+  }
+
+  const profile = loadCustomerProfile();
+  const hasProfile = Boolean(profile.name && profile.lastName && profile.email && profile.phone);
+  openRegisterBtn.textContent = hasProfile ? 'Iniciar sesión' : 'Registrarme';
 };
 
 const openRegister = () => {
@@ -840,6 +960,7 @@ const validateCheckout = () => {
     !checkoutNameInput ||
     !checkoutLastNameInput ||
     !checkoutEmailInput ||
+    !checkoutPhoneInput ||
     !checkoutProvinceSelect ||
     !checkoutCpInput ||
     !checkoutCityInput
@@ -850,18 +971,26 @@ const validateCheckout = () => {
   const name = checkoutNameInput.value.trim();
   const lastName = checkoutLastNameInput.value.trim();
   const email = checkoutEmailInput.value.trim();
+  const phone = normalizePhone(checkoutPhoneInput.value.trim());
   const province = checkoutProvinceSelect.value.trim();
   const cp = checkoutCpInput.value.trim();
   const city = checkoutCityInput.value.trim();
 
-  if (!name || !lastName || !email || !province || !cp || !city) {
-    return { ok: false, message: 'Completá nombre, apellido, email, provincia, codigo postal y localidad.' };
+  if (!name || !lastName || !email || !phone || !province || !cp || !city) {
+    return {
+      ok: false,
+      message: 'Completá nombre, apellido, email, telefono, provincia, codigo postal y localidad.',
+    };
   }
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   if (!emailOk) {
     return { ok: false, message: 'Ingresá un email valido.' };
+  }
+
+  if (phone.length < 10) {
+    return { ok: false, message: 'Ingresá un telefono valido para coordinar por WhatsApp.' };
   }
 
   return { ok: true };
@@ -906,6 +1035,7 @@ const buildCartWhatsappLink = (enforceValidation = false) => {
     '',
     `Cliente: ${checkoutNameInput.value.trim()} ${checkoutLastNameInput.value.trim()}`,
     `Email: ${checkoutEmailInput.value.trim()}`,
+    `Telefono: ${formatPhoneDisplay(checkoutPhoneInput.value.trim())}`,
     `Provincia: ${checkoutProvinceSelect.value.trim()}`,
     `Codigo postal: ${checkoutCpInput.value.trim()}`,
     `Localidad: ${checkoutCityInput.value.trim()}`,
@@ -1353,6 +1483,7 @@ registerForm?.addEventListener('submit', (event) => {
     !registerNameInput ||
     !registerLastNameInput ||
     !registerEmailInput ||
+    !registerPhoneInput ||
     !registerProvinceSelect ||
     !registerCpInput ||
     !registerCityInput
@@ -1361,6 +1492,7 @@ registerForm?.addEventListener('submit', (event) => {
   }
 
   const email = registerEmailInput.value.trim();
+  const phone = normalizePhone(registerPhoneInput.value.trim());
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   if (!emailOk) {
@@ -1371,27 +1503,38 @@ registerForm?.addEventListener('submit', (event) => {
     return;
   }
 
+  if (phone.length < 10) {
+    if (registerHint) {
+      registerHint.textContent = 'Ingresá un telefono valido para continuar.';
+    }
+
+    return;
+  }
+
   const profile = {
     name: registerNameInput.value.trim(),
     lastName: registerLastNameInput.value.trim(),
     email,
+    phone,
     province: registerProvinceSelect.value,
     cp: registerCpInput.value.trim(),
     city: registerCityInput.value.trim(),
   };
 
-  if (!profile.name || !profile.lastName || !profile.province || !profile.cp || !profile.city) {
+  if (!profile.name || !profile.lastName || !profile.email || !profile.phone || !profile.province || !profile.cp || !profile.city) {
     if (registerHint) {
-      registerHint.textContent = 'Completá todos los campos para guardar tu registro.';
+      registerHint.textContent = 'Todos los datos son obligatorios para completar el registro.';
     }
 
     return;
   }
 
   saveCustomerProfile(profile);
+  upsertRegisteredCustomer(profile);
   syncProfileToCheckout(profile);
   saveCheckout();
   updateShippingSummary();
+  updateRegisterButtonState();
 
   if (registerHint) {
     registerHint.textContent = 'Datos guardados. Tu pedido ya se completa con este registro.';
@@ -1403,9 +1546,10 @@ registerForm?.addEventListener('submit', (event) => {
 populateProvinceSelect();
 hydrateCheckout();
 hydrateRegister();
+updateRegisterButtonState();
 updateShippingSummary();
 
-[checkoutNameInput, checkoutLastNameInput, checkoutEmailInput, checkoutProvinceSelect, checkoutCpInput, checkoutCityInput]
+[checkoutNameInput, checkoutLastNameInput, checkoutEmailInput, checkoutPhoneInput, checkoutProvinceSelect, checkoutCpInput, checkoutCityInput]
   .filter(Boolean)
   .forEach((input) => {
     input.addEventListener('input', () => {
