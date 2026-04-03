@@ -1008,30 +1008,27 @@ const hydrateRegister = () => {
 };
 
 const updateRegisterButtonState = () => {
-  if (!openRegisterBtn && !openLoginBtn) {
-    return;
-  }
-
   const session = loadCustomerSession();
-  const sessionProfile = getCurrentSessionProfile();
-  const displayName = [sessionProfile?.name, sessionProfile?.lastName].filter(Boolean).join(' ').trim();
 
+  // Sin sesión: Registrarme + Iniciar sesión visibles; Pedido + Cerrar ocultos
+  // Con sesión: Registrarme + Iniciar sesión ocultos; Pedido + Cerrar visibles
   if (openRegisterBtn) {
-    openRegisterBtn.textContent = 'Registrarme';
     openRegisterBtn.hidden = session.loggedIn;
   }
 
   if (openLoginBtn) {
-    openLoginBtn.classList.toggle('is-active', session.loggedIn);
-    openLoginBtn.textContent = session.loggedIn ? `${displayName || 'Cliente'} 🌸` : 'Iniciar sesión';
-    openLoginBtn.setAttribute(
-      'aria-label',
-      session.loggedIn ? `Sesión iniciada: ${session.email || 'cliente'}` : 'Iniciar sesión',
-    );
+    openLoginBtn.hidden = session.loggedIn;
+    openLoginBtn.classList.remove('is-active');
+    openLoginBtn.textContent = 'Iniciar sesión';
+    openLoginBtn.setAttribute('aria-label', 'Iniciar sesión');
   }
 
   if (logoutBtn) {
     logoutBtn.hidden = !session.loggedIn;
+  }
+
+  if (openCartBtn) {
+    openCartBtn.hidden = !session.loggedIn;
   }
 };
 
@@ -1822,15 +1819,11 @@ registerForm?.addEventListener('submit', (event) => {
   upsertRegisteredCustomer(profile);
   syncProfileToCheckout(profile);
   saveCheckout();
-  saveCustomerSession({
-    loggedIn: true,
-    email: profile.email,
-  });
+  // No iniciar sesión automáticamente al registrarse
   updateShippingSummary();
-  updateRegisterButtonState();
 
   if (registerHint) {
-    registerHint.textContent = 'Datos guardados. Tu pedido ya se completa con este registro.';
+    registerHint.textContent = 'Registro exitoso. Ahora podés iniciar sesión para hacer tu pedido.';
   }
 
   closeRegister();

@@ -2049,7 +2049,7 @@ body::after {
 
     .hero-media {
       order: -1;
-      min-height: 560px;
+      min-height: 320px;
     }
 
     .trust-strip {
@@ -2079,7 +2079,27 @@ body::after {
 
   @media (max-width: 920px) {
     .topbar-inner {
-      min-height: 84px;
+      min-height: 74px;
+      gap: 0.6rem;
+    }
+
+    .actions {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.35rem;
+      max-width: calc(100% - 170px);
+    }
+
+    .action-link {
+      min-height: 36px;
+      padding: 0 0.62rem;
+      font-size: 0.74rem;
+    }
+
+    .cart-pill {
+      min-height: 38px;
+      padding-inline: 0.8rem;
+      font-size: 0.74rem;
     }
 
     .main-nav {
