@@ -7,6 +7,7 @@ const labelInput = document.querySelector('#label');
 const titleInput = document.querySelector('#title');
 const priceInput = document.querySelector('#price');
 const promoInput = document.querySelector('#promo');
+const stockInput = document.querySelector('#stock');
 const imageFilesInput = document.querySelector('#image-files');
 const imageStatus = document.querySelector('#image-status');
 const imagesInput = document.querySelector('#images');
@@ -28,6 +29,25 @@ const allowedImageExtensions = new Set(['jpg', 'jpeg', 'png', 'mjpg']);
 let pendingImageFiles = [];
 
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
+
+const normalizeStock = (value) => {
+  const parsed = Number.parseInt(String(value ?? '').trim(), 10);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 2;
+  }
+
+  return parsed;
+};
+
+const normalizeCatalogStock = (sections) =>
+  (Array.isArray(sections) ? sections : []).map((section) => ({
+    ...section,
+    items: (section.items || []).map((item) => ({
+      ...item,
+      stock: normalizeStock(item.stock),
+    })),
+  }));
 
 const getFileExtension = (fileName) => {
   const dotIndex = fileName.lastIndexOf('.');
@@ -53,13 +73,18 @@ const loadCatalog = () => {
     const raw = localStorage.getItem(storageKey);
 
     if (!raw) {
-      return cloneData(window.DEFAULT_CATALOG_SECTIONS || []);
+      return normalizeCatalogStock(cloneData(window.DEFAULT_CATALOG_SECTIONS || []));
     }
 
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : cloneData(window.DEFAULT_CATALOG_SECTIONS || []);
+
+    if (Array.isArray(parsed)) {
+      return normalizeCatalogStock(parsed);
+    }
+
+    return normalizeCatalogStock(cloneData(window.DEFAULT_CATALOG_SECTIONS || []));
   } catch (_error) {
-    return cloneData(window.DEFAULT_CATALOG_SECTIONS || []);
+    return normalizeCatalogStock(cloneData(window.DEFAULT_CATALOG_SECTIONS || []));
   }
 };
 
@@ -73,6 +98,7 @@ const resetForm = () => {
   form.reset();
   pendingImageFiles = [];
   setImageStatus('No hay archivos seleccionados.');
+  stockInput.value = '2';
   editSectionInput.value = '';
   editIndexInput.value = '';
   formTitle.textContent = 'Nuevo producto';
@@ -168,6 +194,8 @@ const buildMeta = (item) => {
     parts.push(`Promo: ${item.promo}`);
   }
 
+  parts.push(`Stock: ${normalizeStock(item.stock)}`);
+
   parts.push(`${(item.images || []).length} fotos`);
   return parts.join(' · ');
 };
@@ -228,6 +256,7 @@ const hydrateForm = (sectionId, index) => {
   titleInput.value = item.title || '';
   priceInput.value = item.price || '';
   promoInput.value = item.promo || '';
+  stockInput.value = String(normalizeStock(item.stock));
   pendingImageFiles = [];
   imagesInput.value = (item.images || []).join('\n');
   imageFilesInput.value = '';
@@ -274,6 +303,7 @@ form.addEventListener('submit', async (event) => {
     title: titleInput.value.trim(),
     price: priceInput.value.trim(),
     promo: promoInput.value.trim(),
+    stock: normalizeStock(stockInput.value),
     images: mergeImages(uploadedUrls),
   };
 
@@ -328,7 +358,7 @@ productsRoot.addEventListener('click', (event) => {
 cancelEditBtn.addEventListener('click', resetForm);
 
 resetDefaultsBtn.addEventListener('click', () => {
-  catalog = cloneData(window.DEFAULT_CATALOG_SECTIONS || []);
+  catalog = normalizeCatalogStock(cloneData(window.DEFAULT_CATALOG_SECTIONS || []));
   saveCatalog(catalog);
   populateSectionSelect();
   renderProducts();
@@ -337,6 +367,8 @@ resetDefaultsBtn.addEventListener('click', () => {
 
 const initAdmin = () => {
   if (!localStorage.getItem(storageKey)) {
+    saveCatalog(catalog);
+  } else {
     saveCatalog(catalog);
   }
 

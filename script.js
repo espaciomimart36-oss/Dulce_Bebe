@@ -14,10 +14,35 @@ const cartCount = document.querySelector('#cart-count');
 const cartSendBtn = document.querySelector('#cart-send-btn');
 const cartClearBtn = document.querySelector('#cart-clear-btn');
 const cartEmptyText = document.querySelector('#cart-empty-text');
+const openRegisterBtn = document.querySelector('#open-register-btn');
+const closeRegisterBtn = document.querySelector('#close-register-btn');
+const registerOverlay = document.querySelector('#register-overlay');
+const registerModal = document.querySelector('#register-modal');
+const registerForm = document.querySelector('#register-form');
+const registerNameInput = document.querySelector('#register-name');
+const registerLastNameInput = document.querySelector('#register-lastname');
+const registerEmailInput = document.querySelector('#register-email');
+const registerProvinceSelect = document.querySelector('#register-province');
+const registerCpInput = document.querySelector('#register-cp');
+const registerCityInput = document.querySelector('#register-city');
+const registerHint = document.querySelector('#register-hint');
+const checkoutNameInput = document.querySelector('#checkout-name');
+const checkoutLastNameInput = document.querySelector('#checkout-lastname');
+const checkoutEmailInput = document.querySelector('#checkout-email');
+const checkoutProvinceSelect = document.querySelector('#checkout-province');
+const checkoutCpInput = document.querySelector('#checkout-cp');
+const checkoutCityInput = document.querySelector('#checkout-city');
+const checkoutHint = document.querySelector('#checkout-hint');
+const shippingBaseText = document.querySelector('#shipping-base-text');
+const shippingFinalText = document.querySelector('#shipping-final-text');
+const promoHalf = document.querySelector('#promo-half');
+const promoFree = document.querySelector('#promo-free');
 const whatsappNumber = '5493757633601';
 const defaultWhatsappMessage = 'Hola! Quería hacer una consulta sobre Dulce Bebé. ¿Me podrían ayudar?';
 const catalogStorageKey = 'dulcebebe.catalog.v1';
 const cartStorageKey = 'dulcebebe.cart.v1';
+const checkoutStorageKey = 'dulcebebe.checkout.v1';
+const customerProfileStorageKey = 'dulcebebe.customer-profile.v1';
 
 const defaultCatalogSections = window.DEFAULT_CATALOG_SECTIONS || [
   {
@@ -264,6 +289,25 @@ const defaultCatalogSections = window.DEFAULT_CATALOG_SECTIONS || [
 
 const cloneData = (data) => JSON.parse(JSON.stringify(data));
 
+const normalizeStock = (value) => {
+  const parsed = Number.parseInt(String(value ?? '').trim(), 10);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 2;
+  }
+
+  return parsed;
+};
+
+const normalizeCatalogStock = (sections) =>
+  (Array.isArray(sections) ? sections : []).map((section) => ({
+    ...section,
+    items: (section.items || []).map((item) => ({
+      ...item,
+      stock: normalizeStock(item.stock),
+    })),
+  }));
+
 const slugify = (value) =>
   String(value || '')
     .normalize('NFD')
@@ -277,18 +321,18 @@ const loadCatalogSections = () => {
     const raw = localStorage.getItem(catalogStorageKey);
 
     if (!raw) {
-      return cloneData(defaultCatalogSections);
+      return normalizeCatalogStock(cloneData(defaultCatalogSections));
     }
 
     const parsed = JSON.parse(raw);
 
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      return cloneData(defaultCatalogSections);
+      return normalizeCatalogStock(cloneData(defaultCatalogSections));
     }
 
-    return parsed;
+    return normalizeCatalogStock(parsed);
   } catch (_error) {
-    return cloneData(defaultCatalogSections);
+    return normalizeCatalogStock(cloneData(defaultCatalogSections));
   }
 };
 
@@ -321,6 +365,8 @@ let cart = loadCart();
 
 if (!localStorage.getItem(catalogStorageKey)) {
   saveCatalogSections(catalogSections);
+} else {
+  saveCatalogSections(catalogSections);
 }
 
 const assetPath = (fileName) => {
@@ -351,6 +397,60 @@ const featuredTitles = [
   'Chupete frutal',
 ];
 
+const argentinaProvinces = [
+  'Buenos Aires',
+  'Catamarca',
+  'Chaco',
+  'Chubut',
+  'Ciudad Autonoma de Buenos Aires',
+  'Cordoba',
+  'Corrientes',
+  'Entre Rios',
+  'Formosa',
+  'Jujuy',
+  'La Pampa',
+  'La Rioja',
+  'Mendoza',
+  'Misiones',
+  'Neuquen',
+  'Rio Negro',
+  'Salta',
+  'San Juan',
+  'San Luis',
+  'Santa Cruz',
+  'Santa Fe',
+  'Santiago del Estero',
+  'Tierra del Fuego',
+  'Tucuman',
+];
+
+const viacargoBaseByProvince = {
+  'Ciudad Autonoma de Buenos Aires': 6500,
+  'Buenos Aires': 8000,
+  'Cordoba': 9000,
+  'Santa Fe': 9000,
+  'Entre Rios': 9000,
+  'Mendoza': 10500,
+  'San Juan': 11000,
+  'San Luis': 10000,
+  'La Pampa': 9800,
+  'Neuquen': 12000,
+  'Rio Negro': 12000,
+  'Chubut': 13000,
+  'Santa Cruz': 14500,
+  'Tierra del Fuego': 16000,
+  'Misiones': 10500,
+  'Corrientes': 9800,
+  'Chaco': 9800,
+  'Formosa': 10500,
+  'Santiago del Estero': 9800,
+  'Tucuman': 10000,
+  'Salta': 11000,
+  'Jujuy': 11000,
+  'Catamarca': 10500,
+  'La Rioja': 10500,
+};
+
 const buildWhatsappLink = (productName) => {
   const message = productName
     ? `Hola! Vi ${productName} en la página de Dulce Bebé y quería hacer una consulta. ¿Me podrían ayudar?`
@@ -359,10 +459,437 @@ const buildWhatsappLink = (productName) => {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 };
 
-const buildCartWhatsappLink = () => {
+const normalizeText = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+const normalizeProvinceName = (value) => normalizeText(value).replace(/\s+/g, ' ');
+
+const formatMoneyAr = (value) =>
+  new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(Math.max(0, Math.round(value || 0)));
+
+const parsePriceToNumber = (raw) => {
+  if (!raw) {
+    return 0;
+  }
+
+  const digits = String(raw).replace(/[^\d]/g, '');
+  return digits ? Number(digits) : 0;
+};
+
+const getSubtotal = () =>
+  cart.reduce((acc, item) => {
+    const unit = parsePriceToNumber(item.price);
+    return acc + unit * item.quantity;
+  }, 0);
+
+const loadCheckout = () => {
+  try {
+    const raw = localStorage.getItem(checkoutStorageKey);
+
+    if (!raw) {
+      return {
+        name: '',
+        lastName: '',
+        email: '',
+        province: 'Misiones',
+        cp: '',
+        city: '',
+      };
+    }
+
+    const parsed = JSON.parse(raw);
+    return {
+      name: parsed?.name || '',
+      lastName: parsed?.lastName || '',
+      email: parsed?.email || '',
+      province: parsed?.province || 'Misiones',
+      cp: parsed?.cp || '',
+      city: parsed?.city || '',
+    };
+  } catch (_error) {
+    return {
+      name: '',
+      lastName: '',
+      email: '',
+      province: 'Misiones',
+      cp: '',
+      city: '',
+    };
+  }
+};
+
+const loadCustomerProfile = () => {
+  try {
+    const raw = localStorage.getItem(customerProfileStorageKey);
+
+    if (!raw) {
+      return {
+        name: '',
+        lastName: '',
+        email: '',
+        province: 'Misiones',
+        cp: '',
+        city: '',
+      };
+    }
+
+    const parsed = JSON.parse(raw);
+
+    return {
+      name: parsed?.name || '',
+      lastName: parsed?.lastName || '',
+      email: parsed?.email || '',
+      province: parsed?.province || 'Misiones',
+      cp: parsed?.cp || '',
+      city: parsed?.city || '',
+    };
+  } catch (_error) {
+    return {
+      name: '',
+      lastName: '',
+      email: '',
+      province: 'Misiones',
+      cp: '',
+      city: '',
+    };
+  }
+};
+
+const saveCustomerProfile = (profile) => {
+  localStorage.setItem(customerProfileStorageKey, JSON.stringify(profile));
+};
+
+const saveCheckout = () => {
+  if (
+    !checkoutNameInput ||
+    !checkoutLastNameInput ||
+    !checkoutEmailInput ||
+    !checkoutProvinceSelect ||
+    !checkoutCpInput ||
+    !checkoutCityInput
+  ) {
+    return;
+  }
+
+  localStorage.setItem(
+    checkoutStorageKey,
+    JSON.stringify({
+      name: checkoutNameInput.value.trim(),
+      lastName: checkoutLastNameInput.value.trim(),
+      email: checkoutEmailInput.value.trim(),
+      province: checkoutProvinceSelect.value,
+      cp: checkoutCpInput.value.trim(),
+      city: checkoutCityInput.value.trim(),
+    }),
+  );
+};
+
+const getBaseShippingByProvince = (province) => {
+  const normalized = normalizeProvinceName(province);
+  return viacargoBaseByProvince[normalized] || 10500;
+};
+
+const getShippingQuote = () => {
+  const subtotal = getSubtotal();
+  const province = checkoutProvinceSelect?.value || 'Misiones';
+  const base = getBaseShippingByProvince(province);
+
+  if (subtotal >= 100000) {
+    return {
+      subtotal,
+      base,
+      final: 0,
+      promo: 'free',
+    };
+  }
+
+  if (subtotal >= 50000) {
+    return {
+      subtotal,
+      base,
+      final: Math.round(base / 2),
+      promo: 'half',
+    };
+  }
+
+  return {
+    subtotal,
+    base,
+    final: base,
+    promo: 'none',
+  };
+};
+
+const updateShippingSummary = () => {
+  if (!shippingBaseText || !shippingFinalText) {
+    return;
+  }
+
+  const quote = getShippingQuote();
+  shippingBaseText.textContent = `Costo base ViaCargo (${checkoutProvinceSelect?.value || 'Misiones'}): ${formatMoneyAr(
+    quote.base,
+  )}`;
+  shippingFinalText.textContent = `Costo final estimado: ${formatMoneyAr(quote.final)}`;
+
+  if (promoHalf) {
+    promoHalf.hidden = quote.promo !== 'half';
+  }
+
+  if (promoFree) {
+    promoFree.hidden = quote.promo !== 'free';
+  }
+};
+
+const populateProvinceSelect = () => {
+  [checkoutProvinceSelect, registerProvinceSelect].filter(Boolean).forEach((select) => {
+    select.innerHTML = argentinaProvinces
+      .map((province) => `<option value="${province}">${province}</option>`)
+      .join('');
+  });
+};
+
+const syncProfileToCheckout = (profile) => {
+  if (
+    !checkoutNameInput ||
+    !checkoutLastNameInput ||
+    !checkoutEmailInput ||
+    !checkoutProvinceSelect ||
+    !checkoutCpInput ||
+    !checkoutCityInput
+  ) {
+    return;
+  }
+
+  checkoutNameInput.value = profile.name || '';
+  checkoutLastNameInput.value = profile.lastName || '';
+  checkoutEmailInput.value = profile.email || '';
+  checkoutProvinceSelect.value = argentinaProvinces.includes(profile.province) ? profile.province : 'Misiones';
+  checkoutCpInput.value = profile.cp || '';
+  checkoutCityInput.value = profile.city || '';
+};
+
+const hydrateCheckout = () => {
+  const checkout = loadCheckout();
+  const profile = loadCustomerProfile();
+
+  if (!checkoutNameInput || !checkoutLastNameInput || !checkoutEmailInput || !checkoutCpInput || !checkoutCityInput) {
+    return;
+  }
+
+  if (profile.name || profile.lastName || profile.email || profile.cp || profile.city) {
+    syncProfileToCheckout(profile);
+    saveCheckout();
+    return;
+  }
+
+  checkoutNameInput.value = checkout.name;
+  checkoutLastNameInput.value = checkout.lastName;
+  checkoutEmailInput.value = checkout.email;
+  checkoutProvinceSelect.value = argentinaProvinces.includes(checkout.province) ? checkout.province : 'Misiones';
+  checkoutCpInput.value = checkout.cp;
+  checkoutCityInput.value = checkout.city;
+};
+
+const hydrateRegister = () => {
+  const profile = loadCustomerProfile();
+
+  if (
+    !registerNameInput ||
+    !registerLastNameInput ||
+    !registerEmailInput ||
+    !registerProvinceSelect ||
+    !registerCpInput ||
+    !registerCityInput
+  ) {
+    return;
+  }
+
+  registerNameInput.value = profile.name;
+  registerLastNameInput.value = profile.lastName;
+  registerEmailInput.value = profile.email;
+  registerProvinceSelect.value = argentinaProvinces.includes(profile.province) ? profile.province : 'Misiones';
+  registerCpInput.value = profile.cp;
+  registerCityInput.value = profile.city;
+};
+
+const openRegister = () => {
+  if (!registerModal || !registerOverlay) {
+    return;
+  }
+
+  registerModal.classList.add('is-open');
+  registerModal.setAttribute('aria-hidden', 'false');
+  registerOverlay.hidden = false;
+};
+
+const closeRegister = () => {
+  if (!registerModal || !registerOverlay) {
+    return;
+  }
+
+  registerModal.classList.remove('is-open');
+  registerModal.setAttribute('aria-hidden', 'true');
+  registerOverlay.hidden = true;
+};
+
+let cpLookupController = null;
+
+const resolveProvinceNameFromApi = (apiProvince) => {
+  const normalizedApi = normalizeProvinceName(apiProvince);
+  return argentinaProvinces.find((province) => normalizeProvinceName(province) === normalizedApi) || apiProvince;
+};
+
+const lookupPostalCodeForTargets = async ({ cpInput, cityInput, provinceSelect, hintEl, onResolved }) => {
+  if (!cpInput || !cityInput || !provinceSelect || !hintEl) {
+    return;
+  }
+
+  const cpValue = cpInput.value.trim();
+
+  if (cpValue.length < 4) {
+    hintEl.textContent = 'Ingresá al menos 4 digitos del codigo postal para detectar localidad y provincia.';
+    return;
+  }
+
+  if (cpLookupController) {
+    cpLookupController.abort();
+  }
+
+  cpLookupController = new AbortController();
+
+  try {
+    const response = await fetch(
+      `https://apis.datos.gob.ar/georef/api/codigos_postales?codigo_postal=${encodeURIComponent(cpValue)}&max=1`,
+      { signal: cpLookupController.signal },
+    );
+
+    if (!response.ok) {
+      throw new Error('lookup-error');
+    }
+
+    const data = await response.json();
+    const match = data?.codigos_postales?.[0];
+    const locality = match?.localidad?.nombre;
+    const province = match?.provincia?.nombre;
+
+    if (!match || !locality || !province) {
+      hintEl.textContent = 'No encontramos ese codigo postal. Podés completar la localidad manualmente.';
+
+      if (cpValue === '3364') {
+        cityInput.value = 'Comandante Andresito';
+        provinceSelect.value = 'Misiones';
+        hintEl.textContent = '3364 detectado: Comandante Andresito, Misiones.';
+      }
+
+      onResolved?.();
+
+      updateShippingSummary();
+      return;
+    }
+
+    cityInput.value = locality;
+    provinceSelect.value = resolveProvinceNameFromApi(province);
+    hintEl.textContent = `${cpValue} detectado: ${locality}, ${province}.`;
+    onResolved?.();
+    updateShippingSummary();
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      return;
+    }
+
+    if (cpValue === '3364') {
+      cityInput.value = 'Comandante Andresito';
+      provinceSelect.value = 'Misiones';
+      hintEl.textContent = '3364 detectado: Comandante Andresito, Misiones.';
+    } else {
+      hintEl.textContent =
+        'No pudimos validar el codigo postal en este momento. Podés continuar con la localidad manual.';
+    }
+
+    onResolved?.();
+    updateShippingSummary();
+  }
+};
+
+const lookupCheckoutPostalCode = () =>
+  lookupPostalCodeForTargets({
+    cpInput: checkoutCpInput,
+    cityInput: checkoutCityInput,
+    provinceSelect: checkoutProvinceSelect,
+    hintEl: checkoutHint,
+    onResolved: saveCheckout,
+  });
+
+const lookupRegisterPostalCode = () =>
+  lookupPostalCodeForTargets({
+    cpInput: registerCpInput,
+    cityInput: registerCityInput,
+    provinceSelect: registerProvinceSelect,
+    hintEl: registerHint,
+  });
+
+const validateCheckout = () => {
+  if (
+    !checkoutNameInput ||
+    !checkoutLastNameInput ||
+    !checkoutEmailInput ||
+    !checkoutProvinceSelect ||
+    !checkoutCpInput ||
+    !checkoutCityInput
+  ) {
+    return { ok: false, message: 'No se encontro el formulario de datos.' };
+  }
+
+  const name = checkoutNameInput.value.trim();
+  const lastName = checkoutLastNameInput.value.trim();
+  const email = checkoutEmailInput.value.trim();
+  const province = checkoutProvinceSelect.value.trim();
+  const cp = checkoutCpInput.value.trim();
+  const city = checkoutCityInput.value.trim();
+
+  if (!name || !lastName || !email || !province || !cp || !city) {
+    return { ok: false, message: 'Completá nombre, apellido, email, provincia, codigo postal y localidad.' };
+  }
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  if (!emailOk) {
+    return { ok: false, message: 'Ingresá un email valido.' };
+  }
+
+  return { ok: true };
+};
+
+const buildCartWhatsappLink = (enforceValidation = false) => {
   if (cart.length === 0) {
     return buildWhatsappLink();
   }
+
+  const checkoutValidation = validateCheckout();
+
+  if (!checkoutValidation.ok) {
+    if (enforceValidation && checkoutHint) {
+      checkoutHint.textContent = checkoutValidation.message;
+    }
+
+    return '#';
+  }
+
+  const quote = getShippingQuote();
+  const subtotal = quote.subtotal;
+  const promoText =
+    quote.promo === 'free'
+      ? 'PROMO ENVIO GRATIS aplicado 🎁'
+      : quote.promo === 'half'
+        ? 'PROMO 50% DE ENVIO aplicado 🎁 1/2'
+        : 'Sin promo de envio';
 
   const lines = cart.map((item) => {
     const parts = [`- ${item.quantity} x ${item.title}`];
@@ -377,7 +904,18 @@ const buildCartWhatsappLink = () => {
   const message = [
     'Hola! Quiero consultar por este pedido de Dulce Bebe:',
     '',
+    `Cliente: ${checkoutNameInput.value.trim()} ${checkoutLastNameInput.value.trim()}`,
+    `Email: ${checkoutEmailInput.value.trim()}`,
+    `Provincia: ${checkoutProvinceSelect.value.trim()}`,
+    `Codigo postal: ${checkoutCpInput.value.trim()}`,
+    `Localidad: ${checkoutCityInput.value.trim()}`,
+    '',
     ...lines,
+    '',
+    `Subtotal productos: ${formatMoneyAr(subtotal)}`,
+    `Envio ViaCargo base: ${formatMoneyAr(quote.base)}`,
+    `Envio ViaCargo final: ${formatMoneyAr(quote.final)}`,
+    promoText,
     '',
     'Quisiera coordinar envio y forma de pago.',
   ].join('\n');
@@ -394,7 +932,8 @@ const renderCart = () => {
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   cartCount.textContent = String(totalItems);
-  cartSendBtn.href = buildCartWhatsappLink();
+  updateShippingSummary();
+  cartSendBtn.href = buildCartWhatsappLink(false);
   cartSendBtn.target = '_blank';
   cartSendBtn.rel = 'noreferrer';
 
@@ -429,6 +968,8 @@ const renderCart = () => {
       `,
     )
     .join('');
+
+  cartSendBtn.href = buildCartWhatsappLink(false);
 };
 
 const openCart = () => {
@@ -453,9 +994,27 @@ const closeCart = () => {
 
 const addToCart = (sectionId, item) => {
   const itemId = getItemId(sectionId, item);
+  const availableStock = normalizeStock(item.stock);
+
+  if (availableStock <= 0) {
+    if (catalogSummary) {
+      catalogSummary.textContent = `${item.title}: sin stock disponible.`;
+    }
+
+    return;
+  }
+
   const existing = cart.find((entry) => entry.id === itemId);
 
   if (existing) {
+    if (existing.quantity >= availableStock) {
+      if (catalogSummary) {
+        catalogSummary.textContent = `${item.title}: alcanzaste el stock disponible (${availableStock}).`;
+      }
+
+      return;
+    }
+
     existing.quantity += 1;
   } else {
     cart.unshift({
@@ -465,6 +1024,7 @@ const addToCart = (sectionId, item) => {
       label: item.label || 'Producto',
       price: item.price || '',
       image: item.images?.[0] || '',
+      stock: availableStock,
       quantity: 1,
     });
   }
@@ -527,9 +1087,17 @@ const renderThumbs = (item) => {
 };
 
 const renderItem = (item, helper, sectionId) => `
+  ${(() => {
+    const stock = normalizeStock(item.stock);
+    const stockClass = stock <= 0 ? 'stock-badge is-out' : stock === 1 ? 'stock-badge is-last' : 'stock-badge';
+    const stockLabel = stock <= 0 ? 'Sin stock' : stock === 1 ? 'Último disponible' : `Stock: ${stock}`;
+    const disableAdd = stock <= 0 ? 'disabled' : '';
+
+    return `
   <article class="catalog-card reveal" data-section-id="${sectionId}" data-item-id="${getItemId(sectionId, item)}">
     <div class="catalog-media">
       ${item.promo ? `<span class="item-promo">${item.promo}</span>` : ''}
+      <span class="${stockClass}">${stockLabel}</span>
       <img
         class="catalog-main-image"
         src="${assetPath(item.images[0])}"
@@ -547,18 +1115,28 @@ const renderItem = (item, helper, sectionId) => `
       <div class="catalog-footer">
         <p>${helper}</p>
         <div class="catalog-cta-row">
-          <button type="button" class="cart-add-btn" data-cart-add="${getItemId(sectionId, item)}">Agregar</button>
+          <button type="button" class="cart-add-btn" data-cart-add="${getItemId(sectionId, item)}" ${disableAdd}>Agregar</button>
           <a href="${buildWhatsappLink(item.title)}" class="consult-link js-whatsapp-link" target="_blank" rel="noreferrer">Consultar</a>
         </div>
       </div>
     </div>
   </article>
 `;
+  })()}
+`;
 
 const renderFeaturedItem = (item, sectionId) => `
+  ${(() => {
+    const stock = normalizeStock(item.stock);
+    const stockClass = stock <= 0 ? 'stock-badge is-out' : stock === 1 ? 'stock-badge is-last' : 'stock-badge';
+    const stockLabel = stock <= 0 ? 'Sin stock' : stock === 1 ? 'Último disponible' : `Stock: ${stock}`;
+    const disableAdd = stock <= 0 ? 'disabled' : '';
+
+    return `
   <article class="catalog-card featured-card reveal" data-section-id="${sectionId}" data-item-id="${getItemId(sectionId, item)}">
     <div class="catalog-media">
       ${item.promo ? `<span class="item-promo">${item.promo}</span>` : ''}
+      <span class="${stockClass}">${stockLabel}</span>
       <img
         class="catalog-main-image"
         src="${assetPath(item.images[0])}"
@@ -575,12 +1153,14 @@ const renderFeaturedItem = (item, sectionId) => `
       <div class="catalog-footer">
         <p>Consultanos por este producto.</p>
         <div class="catalog-cta-row">
-          <button type="button" class="cart-add-btn" data-cart-add="${getItemId(sectionId, item)}">Agregar</button>
+          <button type="button" class="cart-add-btn" data-cart-add="${getItemId(sectionId, item)}" ${disableAdd}>Agregar</button>
           <a href="${buildWhatsappLink(item.title)}" class="consult-link js-whatsapp-link" target="_blank" rel="noreferrer">Consultar</a>
         </div>
       </div>
     </div>
   </article>
+`;
+  })()}
 `;
 
 const renderSection = (section) => `
@@ -760,6 +1340,96 @@ cartClearBtn?.addEventListener('click', () => {
   cart = [];
   saveCart(cart);
   renderCart();
+});
+
+openRegisterBtn?.addEventListener('click', openRegister);
+closeRegisterBtn?.addEventListener('click', closeRegister);
+registerOverlay?.addEventListener('click', closeRegister);
+
+registerForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  if (
+    !registerNameInput ||
+    !registerLastNameInput ||
+    !registerEmailInput ||
+    !registerProvinceSelect ||
+    !registerCpInput ||
+    !registerCityInput
+  ) {
+    return;
+  }
+
+  const email = registerEmailInput.value.trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  if (!emailOk) {
+    if (registerHint) {
+      registerHint.textContent = 'Ingresá un email valido para continuar.';
+    }
+
+    return;
+  }
+
+  const profile = {
+    name: registerNameInput.value.trim(),
+    lastName: registerLastNameInput.value.trim(),
+    email,
+    province: registerProvinceSelect.value,
+    cp: registerCpInput.value.trim(),
+    city: registerCityInput.value.trim(),
+  };
+
+  if (!profile.name || !profile.lastName || !profile.province || !profile.cp || !profile.city) {
+    if (registerHint) {
+      registerHint.textContent = 'Completá todos los campos para guardar tu registro.';
+    }
+
+    return;
+  }
+
+  saveCustomerProfile(profile);
+  syncProfileToCheckout(profile);
+  saveCheckout();
+  updateShippingSummary();
+
+  if (registerHint) {
+    registerHint.textContent = 'Datos guardados. Tu pedido ya se completa con este registro.';
+  }
+
+  closeRegister();
+});
+
+populateProvinceSelect();
+hydrateCheckout();
+hydrateRegister();
+updateShippingSummary();
+
+[checkoutNameInput, checkoutLastNameInput, checkoutEmailInput, checkoutProvinceSelect, checkoutCpInput, checkoutCityInput]
+  .filter(Boolean)
+  .forEach((input) => {
+    input.addEventListener('input', () => {
+      saveCheckout();
+      updateShippingSummary();
+
+      if (cartSendBtn) {
+        cartSendBtn.href = buildCartWhatsappLink(false);
+      }
+    });
+  });
+
+checkoutCpInput?.addEventListener('blur', lookupCheckoutPostalCode);
+registerCpInput?.addEventListener('blur', lookupRegisterPostalCode);
+
+cartSendBtn?.addEventListener('click', (event) => {
+  const link = buildCartWhatsappLink(true);
+
+  if (link === '#') {
+    event.preventDefault();
+    return;
+  }
+
+  cartSendBtn.href = link;
 });
 
 whatsappLinks.forEach((link) => {

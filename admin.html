@@ -15,12 +15,16 @@
   <body>
     <main class="admin-wrap" id="admin-app">
       <header class="admin-head">
-        <div>
-          <p class="kicker">Panel admin</p>
-          <h1>Dulce Bebe</h1>
-          <p class="sub">Cargá productos, precios y promos de forma simple.</p>
+        <div class="admin-brand">
+          <img class="admin-logo" src="img/logo.jpg" alt="Logo de Dulce Bebé" />
+          <div>
+            <p class="kicker">Panel admin</p>
+            <h1>Dulce Bebe</h1>
+            <p class="sub">Cargá productos, precios y promos de forma simple.</p>
+          </div>
         </div>
         <div class="head-actions">
+          <span class="admin-badge">Cloudinary conectado</span>
           <a href="index.html" class="back-link">Volver a la tienda</a>
         </div>
       </header>
@@ -55,6 +59,11 @@
             <label>
               Promo (opcional)
               <input id="promo" type="text" placeholder="Ejemplo: 2x1 o 15% OFF" />
+            </label>
+
+            <label>
+              Stock disponible
+              <input id="stock" type="number" min="0" step="1" value="2" />
             </label>
 
             <label>
