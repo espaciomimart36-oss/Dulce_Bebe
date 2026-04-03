@@ -224,6 +224,11 @@ const renderProducts = () => {
                     <p class="item-meta">${buildMeta(item)}</p>
                   </div>
                   <div class="item-actions">
+                    <div class="stock-quick" aria-label="Ajuste rapido de stock">
+                      <button type="button" data-action="stock-dec" data-section="${section.id}" data-index="${index}" aria-label="Restar stock">-</button>
+                      <span>${normalizeStock(item.stock)}</span>
+                      <button type="button" data-action="stock-inc" data-section="${section.id}" data-index="${index}" aria-label="Sumar stock">+</button>
+                    </div>
                     <button type="button" data-action="edit" data-section="${section.id}" data-index="${index}">Editar</button>
                     <button type="button" data-action="delete" data-section="${section.id}" data-index="${index}">Borrar</button>
                   </div>
@@ -277,6 +282,24 @@ const removeItem = (sectionId, index) => {
   saveCatalog(catalog);
   renderProducts();
   resetForm();
+};
+
+const adjustItemStock = (sectionId, index, delta) => {
+  const section = catalog.find((entry) => entry.id === sectionId);
+
+  if (!section) {
+    return;
+  }
+
+  const item = section.items[index];
+
+  if (!item) {
+    return;
+  }
+
+  item.stock = Math.max(0, normalizeStock(item.stock) + delta);
+  saveCatalog(catalog);
+  renderProducts();
 };
 
 form.addEventListener('submit', async (event) => {
@@ -347,6 +370,16 @@ productsRoot.addEventListener('click', (event) => {
 
   if (action === 'edit') {
     hydrateForm(section, index);
+    return;
+  }
+
+  if (action === 'stock-inc') {
+    adjustItemStock(section, index, 1);
+    return;
+  }
+
+  if (action === 'stock-dec') {
+    adjustItemStock(section, index, -1);
     return;
   }
 
