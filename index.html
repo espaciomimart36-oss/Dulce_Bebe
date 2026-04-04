@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
-    <link rel="stylesheet" href="styles.css?v=20260403-3" />
+    <link rel="stylesheet" href="styles.css?v=20260403-4" />
   </head>
   <body>
     <div class="promo-strip" aria-label="Anuncios destacados">
@@ -406,6 +406,49 @@
       </form>
     </section>
 
+    <button
+      type="button"
+      class="faq-bear-btn"
+      id="faq-bear-btn"
+      aria-label="Abrir asistente de preguntas frecuentes"
+      aria-controls="faq-assistant"
+      aria-expanded="false"
+    >
+      <span class="faq-bear-avatar" aria-hidden="true">
+        <img src="img/logo.jpg" alt="" />
+      </span>
+      <span class="faq-bear-label">Pregúntame</span>
+    </button>
+
+    <section class="faq-assistant" id="faq-assistant" aria-label="Asistente de compra" aria-hidden="true" hidden>
+      <div class="faq-assistant-head">
+        <div class="faq-assistant-brand">
+          <span class="faq-mini-bear" aria-hidden="true">
+            <img src="img/logo.jpg" alt="" />
+          </span>
+          <div>
+            <p class="faq-kicker">Asistente de compra</p>
+            <h2>Osito guía</h2>
+          </div>
+        </div>
+        <button type="button" class="cart-close-btn" id="faq-close-btn" aria-label="Cerrar asistente">Cerrar</button>
+      </div>
+
+      <p class="faq-assistant-copy">
+        Te respondo dudas frecuentes de compra. Si la consulta es puntual sobre un producto,
+        te paso directo a WhatsApp.
+      </p>
+
+      <div class="faq-quick-list" id="faq-quick-list" aria-label="Preguntas frecuentes sugeridas"></div>
+      <div class="faq-thread" id="faq-thread" role="log" aria-live="polite"></div>
+
+      <form class="faq-form" id="faq-form" novalidate>
+        <label class="sr-only" for="faq-input">Escribí tu pregunta</label>
+        <input type="text" id="faq-input" placeholder="Ej: ¿Cómo se hacen los envíos?" autocomplete="off" />
+        <button type="submit" class="faq-send-btn">Enviar</button>
+      </form>
+    </section>
+
     <a href="#" class="whatsapp-float js-whatsapp-link" aria-label="Contactar por WhatsApp">WA</a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -415,7 +458,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js?v=20260403-2"></script>
     <script src="clients-store.js?v=20260403-2"></script>
-    <script src="script.js?v=20260403-2"></script>
+    <script src="script.js?v=20260403-4"></script>
     <script>
       (function () {
         if (!window.gsap || !window.ScrollTrigger) return;

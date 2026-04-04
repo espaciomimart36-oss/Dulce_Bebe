@@ -37,6 +37,13 @@ const registerHint = document.querySelector('#register-hint');
 const loginEmailInput = document.querySelector('#login-email');
 const loginPasswordInput = document.querySelector('#login-password');
 const loginHint = document.querySelector('#login-hint');
+const faqBearBtn = document.querySelector('#faq-bear-btn');
+const faqAssistant = document.querySelector('#faq-assistant');
+const faqCloseBtn = document.querySelector('#faq-close-btn');
+const faqThread = document.querySelector('#faq-thread');
+const faqForm = document.querySelector('#faq-form');
+const faqInput = document.querySelector('#faq-input');
+const faqQuickList = document.querySelector('#faq-quick-list');
 const checkoutNameInput = document.querySelector('#checkout-name');
 const checkoutLastNameInput = document.querySelector('#checkout-lastname');
 const checkoutEmailInput = document.querySelector('#checkout-email');
@@ -602,6 +609,381 @@ const formatPhoneDisplay = (value) => {
 const buildWhatsappDirectLink = (rawPhone) => {
   const normalized = normalizePhone(rawPhone);
   return normalized ? `https://wa.me/${normalized}` : '#';
+};
+
+const faqKnowledgeBase = [
+  {
+    label: 'Cómo comprar',
+    prompt: '¿Cómo compro en la tienda?',
+    patterns: ['como compro', 'como comprar', 'hacer pedido', 'pasos para comprar', 'armar pedido'],
+    answer:
+      'Elegí los productos que te gusten, registrate o iniciá sesión, armá tu pedido y envialo por WhatsApp para confirmar stock, envío y forma de pago.',
+  },
+  {
+    label: 'Envíos',
+    prompt: '¿Cómo se hacen los envíos?',
+    patterns: ['envio', 'envios', 'via cargo', 'viacargo', 'mandan al interior', 'hacen envios'],
+    answer:
+      'Hacemos envíos por ViaCargo a todo el país. Desde $50.000 tenés 50% de descuento en el envío y desde $100.000 el envío es gratis.',
+  },
+  {
+    label: 'Pagos',
+    prompt: '¿Cómo se paga?',
+    patterns: ['pago', 'pagos', 'medio de pago', 'medios de pago', 'abonar', 'transferencia'],
+    answer:
+      'La forma de pago se coordina por WhatsApp al confirmar el pedido. Si necesitás un medio específico, la propietaria te lo confirma en ese momento.',
+  },
+  {
+    label: 'Promos',
+    prompt: '¿Qué promos tienen?',
+    patterns: ['promo', 'promos', 'descuento', 'envio gratis', '50 por ciento', '50%'],
+    answer:
+      'La promo fija actual es 50% de descuento en envío desde $50.000 y envío gratis desde $100.000.',
+  },
+  {
+    label: 'Cambios',
+    prompt: '¿Hacen cambios o devoluciones?',
+    patterns: ['cambio', 'cambios', 'devolucion', 'devoluciones', 'reembolso'],
+    answer:
+      'Podés solicitar cambio o devolución dentro de las 48 horas de recibido el pedido. El producto debe estar sin uso, en perfecto estado y con su etiqueta.',
+  },
+  {
+    label: 'Talles',
+    prompt: '¿Qué talles manejan?',
+    patterns: ['talle', 'talles', 'medida', 'medidas', 'sizes'],
+    answer:
+      'Podés consultar talles generales desde acá, pero para confirmar el talle exacto de una prenda conviene ir a WhatsApp porque el stock cambia.',
+    recommendHuman: true,
+  },
+  {
+    label: 'Stock',
+    prompt: '¿Hay stock?',
+    patterns: ['stock', 'disponible', 'disponibilidad', 'queda', 'quedan'],
+    answer:
+      'El stock visible es orientativo. Si querés confirmar una prenda puntual, color o última unidad, te paso directo a WhatsApp.',
+    recommendHuman: true,
+  },
+  {
+    label: 'Precios',
+    prompt: '¿Cómo veo los precios?',
+    patterns: ['precio', 'precios', 'cuanto sale', 'valor'],
+    answer:
+      'Cuando un producto tiene precio cargado lo vas a ver en su tarjeta. La confirmación final siempre se hace por WhatsApp al cerrar el pedido.',
+    recommendHuman: true,
+  },
+  {
+    label: 'Registro',
+    prompt: '¿Para qué sirve registrarme?',
+    patterns: ['registrarme', 'registro', 'cuenta', 'iniciar sesion', 'sesion'],
+    answer:
+      'Registrarte guarda tus datos para pedir más rápido. Primero te registrás y después iniciás sesión con tu email y tu clave.',
+  },
+  {
+    label: 'Retiro',
+    prompt: '¿Se puede retirar?',
+    patterns: ['retiro', 'retirar', 'ubicacion', 'direccion', 'donde estan', 'local'],
+    answer:
+      'La tienda está en Comandante Andresito, Misiones. Si querés coordinar retiro, punto de encuentro o entrega local, se confirma por WhatsApp.',
+    recommendHuman: true,
+  },
+  {
+    label: 'Demoras',
+    prompt: '¿Cuánto tarda en llegar?',
+    patterns: ['cuanto tarda', 'demora', 'demoran', 'llega', 'tiempo de entrega'],
+    answer:
+      'El tiempo final depende del destino y del despacho. Al confirmar el pedido por WhatsApp se informa el plazo estimado según tu provincia.',
+  },
+];
+
+const faqHumanOnlySignals = [
+  'mi pedido',
+  'seguimiento',
+  'ya pague',
+  'ya transferi',
+  'ya hice el pedido',
+  'quiero reservar',
+  'quiero apartar',
+  'consulta puntual',
+  'me lo guardas',
+  'para hoy',
+  'para manana',
+];
+
+let faqAssistantInitialized = false;
+let faqAssistantHideTimer = null;
+
+const normalizeFaqQuery = (value) => normalizeText(value).toLowerCase();
+
+const buildFaqWhatsappLink = (question) => {
+  const sanitizedQuestion = String(question || '').trim();
+  const message = sanitizedQuestion
+    ? `Hola! Vengo desde el osito de ayuda de la web y tengo esta consulta puntual:\n\n"${sanitizedQuestion}"\n\n¿Me podrían ayudar?`
+    : 'Hola! Vengo desde el osito de ayuda de la web y necesito ayuda con una compra. ¿Me podrían orientar?';
+
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+};
+
+const getCatalogProductMatch = (question) => {
+  const normalizedQuestion = normalizeFaqQuery(question);
+
+  return (
+    catalogSections
+      .flatMap((section) => section.items || [])
+      .find((item) => normalizedQuestion.includes(normalizeFaqQuery(item.title))) || null
+  );
+};
+
+const getMentionedProvince = (question) => {
+  const normalizedQuestion = normalizeFaqQuery(question);
+  return (
+    argentinaProvinces.find((province) => normalizedQuestion.includes(normalizeProvinceName(province).toLowerCase())) ||
+    null
+  );
+};
+
+const scoreFaqEntry = (normalizedQuestion, entry) => {
+  let score = 0;
+
+  entry.patterns.forEach((pattern) => {
+    const normalizedPattern = normalizeFaqQuery(pattern);
+
+    if (!normalizedPattern) {
+      return;
+    }
+
+    if (normalizedQuestion === normalizedPattern) {
+      score += 5;
+      return;
+    }
+
+    if (normalizedQuestion.includes(normalizedPattern)) {
+      score += normalizedPattern.includes(' ') ? 3 : 1;
+    }
+  });
+
+  if (normalizedQuestion.includes(normalizeFaqQuery(entry.label))) {
+    score += 2;
+  }
+
+  return score;
+};
+
+const resolveFaqResponse = (question) => {
+  const normalizedQuestion = normalizeFaqQuery(question);
+
+  if (!normalizedQuestion) {
+    return {
+      kind: 'empty',
+      answer: 'Escribime una pregunta y te respondo o te paso directo con la propietaria.',
+    };
+  }
+
+  const productMatch = getCatalogProductMatch(question);
+  const needsHuman = faqHumanOnlySignals.some((signal) => normalizedQuestion.includes(normalizeFaqQuery(signal)));
+
+  if (productMatch) {
+    return {
+      kind: 'redirect',
+      answer: `Esa consulta ya es puntual sobre "${productMatch.title}". Lo mejor es pasarla directo a WhatsApp para confirmar stock real, talle, color, fotos actuales o disponibilidad.`,
+      action: {
+        label: 'Ir a WhatsApp',
+        href: buildFaqWhatsappLink(question),
+      },
+    };
+  }
+
+  if (needsHuman) {
+    return {
+      kind: 'redirect',
+      answer:
+        'Esa consulta necesita atención humana porque depende de tu caso puntual. Te paso directo al WhatsApp de la propietaria.',
+      action: {
+        label: 'Hablar con la propietaria',
+        href: buildFaqWhatsappLink(question),
+      },
+    };
+  }
+
+  const province = getMentionedProvince(question);
+  if (province && /(envio|envios|viacargo|via cargo|correo|llega|mandan)/.test(normalizedQuestion)) {
+    const base = getBaseShippingByProvince(province);
+
+    return {
+      kind: 'answer',
+      answer: `Hacemos envíos por ViaCargo a ${province}. El costo base estimado es ${formatMoneyAr(
+        base,
+      )}. Desde $50.000 el envío queda al 50% y desde $100.000 es gratis.`,
+    };
+  }
+
+  const bestMatch = faqKnowledgeBase
+    .map((entry) => ({ entry, score: scoreFaqEntry(normalizedQuestion, entry) }))
+    .sort((left, right) => right.score - left.score)[0];
+
+  if (bestMatch && bestMatch.score > 0) {
+    return {
+      kind: bestMatch.entry.recommendHuman ? 'hybrid' : 'answer',
+      answer: bestMatch.entry.answer,
+      action: bestMatch.entry.recommendHuman
+        ? {
+            label: 'Consultar caso puntual',
+            href: buildFaqWhatsappLink(question),
+          }
+        : null,
+    };
+  }
+
+  return {
+    kind: 'fallback',
+    answer:
+      'Puedo ayudarte con envíos, pagos, promociones, cambios, talles, stock general y cómo comprar. Si tu duda es puntual, te llevo directo a WhatsApp.',
+    action: {
+      label: 'Hablar con la propietaria',
+      href: buildFaqWhatsappLink(question),
+    },
+  };
+};
+
+const scrollFaqThreadToBottom = () => {
+  if (!faqThread) {
+    return;
+  }
+
+  faqThread.scrollTop = faqThread.scrollHeight;
+};
+
+const appendFaqMessage = (role, text, action = null) => {
+  if (!faqThread) {
+    return;
+  }
+
+  const message = document.createElement('article');
+  message.className = `faq-message is-${role}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'faq-bubble';
+
+  String(text || '')
+    .split(/\n+/)
+    .filter(Boolean)
+    .forEach((part) => {
+      const paragraph = document.createElement('p');
+      paragraph.textContent = part;
+      bubble.appendChild(paragraph);
+    });
+
+  if (action?.href && action?.label) {
+    const link = document.createElement('a');
+    link.className = 'faq-message-link';
+    link.href = action.href;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    link.textContent = action.label;
+    bubble.appendChild(link);
+  }
+
+  message.appendChild(bubble);
+  faqThread.appendChild(message);
+  scrollFaqThreadToBottom();
+};
+
+const renderFaqQuickQuestions = () => {
+  if (!faqQuickList) {
+    return;
+  }
+
+  faqQuickList.replaceChildren();
+
+  faqKnowledgeBase.slice(0, 8).forEach((entry) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'faq-chip';
+    chip.dataset.faqQuestion = entry.prompt;
+    chip.textContent = entry.label;
+    faqQuickList.appendChild(chip);
+  });
+
+  const directChip = document.createElement('button');
+  directChip.type = 'button';
+  directChip.className = 'faq-chip';
+  directChip.dataset.faqQuestion = 'Necesito hacer una consulta puntual sobre un producto';
+  directChip.textContent = 'Consulta puntual';
+  faqQuickList.appendChild(directChip);
+};
+
+const seedFaqConversation = () => {
+  if (!faqThread) {
+    return;
+  }
+
+  faqThread.replaceChildren();
+  appendFaqMessage(
+    'bot',
+    'Hola! Soy el osito guía de Dulce Bebé. Te ayudo con dudas frecuentes de compra.',
+  );
+  appendFaqMessage(
+    'bot',
+    'Podés tocar una pregunta rápida o escribir la tuya. Si es algo puntual sobre una prenda o un pedido, te paso a WhatsApp.',
+  );
+};
+
+const initializeFaqAssistant = () => {
+  if (faqAssistantInitialized) {
+    return;
+  }
+
+  renderFaqQuickQuestions();
+  seedFaqConversation();
+  faqAssistantInitialized = true;
+};
+
+const openFaqAssistant = () => {
+  if (!faqAssistant) {
+    return;
+  }
+
+  initializeFaqAssistant();
+  window.clearTimeout(faqAssistantHideTimer);
+  faqAssistant.hidden = false;
+  faqAssistant.setAttribute('aria-hidden', 'false');
+  faqBearBtn?.setAttribute('aria-expanded', 'true');
+
+  requestAnimationFrame(() => {
+    faqAssistant.classList.add('is-open');
+    faqInput?.focus();
+  });
+};
+
+const closeFaqAssistant = () => {
+  if (!faqAssistant) {
+    return;
+  }
+
+  faqAssistant.classList.remove('is-open');
+  faqAssistant.setAttribute('aria-hidden', 'true');
+  faqBearBtn?.setAttribute('aria-expanded', 'false');
+  faqAssistantHideTimer = window.setTimeout(() => {
+    faqAssistant.hidden = true;
+  }, 180);
+};
+
+const submitFaqQuestion = (question) => {
+  const trimmedQuestion = String(question || '').trim();
+
+  if (!trimmedQuestion) {
+    faqInput?.focus();
+    return;
+  }
+
+  openFaqAssistant();
+  appendFaqMessage('user', trimmedQuestion);
+
+  const response = resolveFaqResponse(trimmedQuestion);
+  appendFaqMessage('bot', response.answer, response.action || null);
+
+  if (faqInput) {
+    faqInput.value = '';
+  }
 };
 
 const formatMoneyAr = (value) =>
@@ -1927,4 +2309,38 @@ whatsappLinks.forEach((link) => {
   link.href = buildWhatsappLink();
   link.target = '_blank';
   link.rel = 'noreferrer';
+});
+
+faqBearBtn?.addEventListener('click', (event) => {
+  event.stopPropagation();
+
+  if (faqAssistant?.hidden || !faqAssistant.classList.contains('is-open')) {
+    openFaqAssistant();
+    return;
+  }
+
+  closeFaqAssistant();
+});
+
+faqCloseBtn?.addEventListener('click', closeFaqAssistant);
+
+faqQuickList?.addEventListener('click', (event) => {
+  const chip = event.target.closest('[data-faq-question]');
+
+  if (!chip) {
+    return;
+  }
+
+  submitFaqQuestion(chip.dataset.faqQuestion || '');
+});
+
+faqForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitFaqQuestion(faqInput?.value || '');
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && faqAssistant?.classList.contains('is-open')) {
+    closeFaqAssistant();
+  }
 });
