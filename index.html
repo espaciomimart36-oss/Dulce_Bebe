@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="icon" type="image/jpeg" href="img/logo.jpg" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260403-2" />
   </head>
   <body>
     <div class="promo-strip" aria-label="Anuncios destacados">
@@ -29,25 +29,22 @@
 
     <header class="topbar">
       <div class="container topbar-inner">
-        <a href="#hero" class="logo" aria-label="Inicio Dulce Bebé">
-          <img class="logo-mark" src="img/logo.jpg" alt="Logo de Dulce Bebé" />
-        </a>
+        <a href="#hero" class="topbar-brand" aria-label="Inicio Dulce Bebé">Dulce Bebé</a>
 
         <nav class="main-nav" aria-label="Navegación principal">
           <a href="#hero">Inicio</a>
           <a href="#catalogo">Catálogo</a>
           <a href="#contacto">Ubicación</a>
           <a href="#politicas">Políticas</a>
+          <div class="actions">
+            <button type="button" class="action-link" id="open-register-btn">Registrarme</button>
+            <button type="button" class="action-link" id="open-login-btn">Iniciar sesión</button>
+            <button type="button" class="action-link" id="logout-btn" hidden>Cerrar sesión</button>
+            <button type="button" class="cart-pill" id="open-cart-btn" aria-label="Abrir pedido" hidden>
+              Pedido <span id="cart-count">0</span>
+            </button>
+          </div>
         </nav>
-
-        <div class="actions">
-          <button type="button" class="action-link" id="open-register-btn">Registrarme</button>
-          <button type="button" class="action-link" id="open-login-btn">Iniciar sesión</button>
-          <button type="button" class="action-link" id="logout-btn" hidden>Cerrar sesión</button>
-          <button type="button" class="cart-pill" id="open-cart-btn" aria-label="Abrir pedido" hidden>
-            Pedido <span id="cart-count">0</span>
-          </button>
-        </div>
 
         <button class="menu-btn" aria-label="Abrir menú" aria-expanded="false">Menú</button>
       </div>
@@ -411,11 +408,60 @@
 
     <a href="#" class="whatsapp-float js-whatsapp-link" aria-label="Contactar por WhatsApp">WA</a>
 
-    <script src="catalog-default.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="catalog-default.js?v=20260403-2"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
-    <script src="clients-store.js"></script>
-    <script src="script.js"></script>
+    <script src="firebase-config.js?v=20260403-2"></script>
+    <script src="clients-store.js?v=20260403-2"></script>
+    <script src="script.js?v=20260403-2"></script>
+    <script>
+      (function () {
+        if (!window.gsap || !window.ScrollTrigger) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        function animateReveal(el, delay) {
+          gsap.fromTo(
+            el,
+            { autoAlpha: 0, y: 26 },
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.72,
+              delay: delay || 0,
+              ease: 'power2.out',
+              scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+            }
+          );
+        }
+
+        document.querySelectorAll('.reveal').forEach(function (el) {
+          animateReveal(el);
+        });
+
+        new MutationObserver(function (mutations) {
+          mutations.forEach(function (m) {
+            m.addedNodes.forEach(function (node) {
+              if (node.nodeType !== 1) return;
+              if (node.classList && node.classList.contains('reveal')) {
+                animateReveal(node);
+              }
+              var cards = node.querySelectorAll ? node.querySelectorAll('.catalog-card.reveal') : [];
+              if (cards.length) {
+                Array.prototype.forEach.call(cards, function (card, i) {
+                  animateReveal(card, i * 0.07);
+                });
+              } else {
+                var children = node.querySelectorAll ? node.querySelectorAll('.reveal') : [];
+                Array.prototype.forEach.call(children, function (child) {
+                  animateReveal(child);
+                });
+              }
+            });
+          });
+        }).observe(document.body, { childList: true, subtree: true });
+      })();
+    </script>
   </body>
 </html>

@@ -715,30 +715,33 @@ const saveCustomerProfile = (profile) => {
   localStorage.setItem(customerProfileStorageKey, JSON.stringify(profile));
 };
 
-const loadCustomerSession = () => {
+const defaultCustomerSession = Object.freeze({ loggedIn: false, email: '' });
+let currentCustomerSession = { ...defaultCustomerSession };
+
+const purgeStoredCustomerSession = () => {
   try {
-    const raw = localStorage.getItem(customerSessionStorageKey);
-
-    if (!raw) {
-      return { loggedIn: false, email: '' };
-    }
-
-    const parsed = JSON.parse(raw);
-    return {
-      loggedIn: Boolean(parsed?.loggedIn),
-      email: parsed?.email || '',
-    };
+    localStorage.removeItem(customerSessionStorageKey);
+    sessionStorage.removeItem(customerSessionStorageKey);
   } catch (_error) {
-    return { loggedIn: false, email: '' };
+    // No hacemos nada si el navegador bloquea el storage.
   }
 };
 
+const loadCustomerSession = () => {
+  return { ...currentCustomerSession };
+};
+
 const saveCustomerSession = (session) => {
-  localStorage.setItem(customerSessionStorageKey, JSON.stringify(session));
+  currentCustomerSession = {
+    loggedIn: Boolean(session?.loggedIn),
+    email: session?.email?.trim() || '',
+  };
+  purgeStoredCustomerSession();
 };
 
 const clearCustomerSession = () => {
-  localStorage.setItem(customerSessionStorageKey, JSON.stringify({ loggedIn: false, email: '' }));
+  currentCustomerSession = { ...defaultCustomerSession };
+  purgeStoredCustomerSession();
 };
 
 const getCurrentSessionProfile = () => {
@@ -1885,6 +1888,7 @@ loginForm?.addEventListener('submit', async (event) => {
 populateProvinceSelect();
 hydrateCheckout();
 hydrateRegister();
+purgeStoredCustomerSession();
 updateRegisterButtonState();
 updateShippingSummary();
 
