@@ -471,53 +471,53 @@ body::after {
 
   .hero-media {
     position: relative;
-    overflow: hidden;
-    min-height: 560px;
-    border-radius: var(--radius-xl);
-    background: linear-gradient(180deg, #f8e3d8 0%, #f1d2c7 100%);
-    box-shadow: var(--shadow);
+    overflow: visible;
+    min-height: 360px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    box-shadow: none;
     isolation: isolate;
   }
 
   .hero-media::after {
-    content: "";
-    position: absolute;
-    inset: 18px;
-    border-radius: 28px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    pointer-events: none;
+    display: none;
   }
 
   .hero-media::before {
     content: "";
     position: absolute;
-    right: -8%;
-    bottom: -18%;
-    width: 360px;
-    height: 360px;
+    top: 50%;
+    left: 50%;
+    width: 320px;
+    height: 320px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0) 68%);
-    z-index: -1;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(241, 210, 199, 0.72) 0%, rgba(241, 210, 199, 0.28) 48%, rgba(241, 210, 199, 0) 74%);
+    z-index: 0;
   }
 
   .hero-orbit {
     position: absolute;
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 50%;
+    pointer-events: none;
   }
 
   .orbit-one {
-    top: 48px;
-    right: 44px;
-    width: 460px;
-    height: 460px;
+    top: 50%;
+    left: 50%;
+    width: 350px;
+    height: 350px;
+    transform: translate(-50%, -50%);
   }
 
   .orbit-two {
-    right: -80px;
-    bottom: -140px;
-    width: 620px;
-    height: 620px;
+    top: 50%;
+    left: 50%;
+    width: 430px;
+    height: 430px;
+    transform: translate(-50%, -50%);
     border-color: rgba(255, 255, 255, 0.3);
   }
 
@@ -527,27 +527,27 @@ body::after {
     display: grid;
     place-items: center;
     height: 100%;
-    padding: 1.5rem;
+    padding: 0;
   }
 
   .stage-shell {
     position: relative;
     display: grid;
     place-items: center;
-    width: min(100%, 620px);
+    width: min(100%, 290px);
     aspect-ratio: 1 / 1;
-    padding: 1rem;
+    padding: 0.7rem;
     border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 30px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.28));
-    box-shadow: 0 24px 54px rgba(107, 68, 61, 0.18);
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.3));
+    box-shadow: 0 20px 42px rgba(107, 68, 61, 0.16);
   }
 
   .stage-shell::before {
     content: "";
     position: absolute;
-    inset: 18px;
-    border-radius: 28px;
+    inset: 12px;
+    border-radius: 50%;
     background: linear-gradient(180deg, #edd7cc 0%, #e4c9bb 100%);
     box-shadow: inset 0 0 0 1px rgba(149, 91, 80, 0.08);
   }
@@ -555,12 +555,12 @@ body::after {
   .stage-shell img {
     position: relative;
     z-index: 1;
-    width: min(100%, 480px);
-    aspect-ratio: 1 / 0.78;
+    width: min(100%, 210px);
+    aspect-ratio: 1 / 1;
     object-fit: cover;
-    object-position: center top;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 26px 60px rgba(88, 54, 47, 0.24);
+    object-position: center;
+    border-radius: 50%;
+    box-shadow: 0 18px 34px rgba(88, 54, 47, 0.2);
   }
 
   .floating-card {
@@ -2069,7 +2069,7 @@ body::after {
 
     .hero-media {
       order: -1;
-      min-height: 320px;
+      min-height: 280px;
     }
 
     .trust-strip {
@@ -2205,25 +2205,39 @@ body::after {
     }
 
     .hero-media {
-      min-height: 300px;
+      min-height: 220px;
     }
 
     .brand-stage {
-      padding: 1rem;
+      padding: 0;
     }
 
     .stage-shell {
-      padding: 0.75rem;
-      border-radius: var(--radius-lg);
+      width: min(100%, 230px);
+      padding: 0.55rem;
     }
 
     .stage-shell::before {
-      inset: 12px;
-      border-radius: 18px;
+      inset: 9px;
     }
 
     .stage-shell img {
-      border-radius: 18px;
+      width: min(100%, 165px);
+    }
+
+    .hero-media::before {
+      width: 250px;
+      height: 250px;
+    }
+
+    .orbit-one {
+      width: 260px;
+      height: 260px;
+    }
+
+    .orbit-two {
+      width: 320px;
+      height: 320px;
     }
 
     .hero-metrics,
@@ -2255,12 +2269,6 @@ body::after {
   }
 
   @media (max-width: 560px) {
-    .logo-mark {
-      width: 112px;
-      height: 84px;
-      border-radius: 12px;
-    }
-
     .hero-copy,
     .contact-panel,
     .contact-card {
@@ -2268,7 +2276,35 @@ body::after {
     }
 
     .hero-media {
-      min-height: 360px;
+      min-height: 190px;
+    }
+
+    .stage-shell {
+      width: min(100%, 190px);
+      padding: 0.48rem;
+    }
+
+    .stage-shell::before {
+      inset: 8px;
+    }
+
+    .stage-shell img {
+      width: min(100%, 136px);
+    }
+
+    .hero-media::before {
+      width: 210px;
+      height: 210px;
+    }
+
+    .orbit-one {
+      width: 220px;
+      height: 220px;
+    }
+
+    .orbit-two {
+      width: 270px;
+      height: 270px;
     }
 
     .floating-top {
